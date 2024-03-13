@@ -11,3 +11,6 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+@classmethod
+def get_user_by_email(cls, email: str):
+        return cls.query.filter(cls.email == email).first()
