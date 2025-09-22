@@ -1,23 +1,10 @@
 'use client';
-import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { fetchCategories, fetchProducts } from '../lib/api';
-import { Category, Product } from '../lib/types';
-
-export const metadata: Metadata = {
-  title: 'Products - Chipper',
-  description: 'Browse our full range of products at Chipper.',
-  keywords: 'products, Chipper, ecommerce, shopping',
-  openGraph: {
-    title: 'Products - Chipper',
-    description: 'Browse our full range of products at Chipper.',
-    url: 'https://chipper-store.com/products',
-    images: [`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/v1234567890/chipper/og-image.jpg`],
-  },
-};
+import { fetchCategories, fetchProducts } from '../../../lib/api';
+import { Category, Product } from '../../../lib/types';
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();

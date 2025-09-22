@@ -1,10 +1,15 @@
 import { Category, Order, Product } from './types';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export async function fetchProducts(categoryId?: string): Promise<Product[]> {
   try {
+    if (!API_BASE_URL) {
+      console.warn('NEXT_PUBLIC_API_URL is not set. Using fallback: http://localhost:5000');
+    }
     const url = categoryId
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/products?categoryId=${categoryId}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/products`;
+      ? `${API_BASE_URL}/api/products?categoryId=${categoryId}`
+      : `${API_BASE_URL}/api/products`;
     const res = await fetch(url, {
       cache: 'no-store', // Ensure fresh data for SSG
     });
@@ -22,7 +27,10 @@ export async function fetchProducts(categoryId?: string): Promise<Product[]> {
 
 export async function fetchProduct(id: string): Promise<Product> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`, {
+    if (!API_BASE_URL) {
+      console.warn('NEXT_PUBLIC_API_URL is not set. Using fallback: http://localhost:5000');
+    }
+    const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
       cache: 'no-store',
     });
     if (!res.ok) throw new Error('Failed to fetch product');
@@ -32,13 +40,17 @@ export async function fetchProduct(id: string): Promise<Product> {
       imageUrl: `${product.imageUrl}?w=600&h=400&c=fill&q=80`, // Optimize for product page
     };
   } catch (error) {
+    console.error('Error fetching product:', error);
     throw new Error('Product not found');
   }
 }
 
 export async function fetchCategories(): Promise<Category[]> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, {
+    if (!API_BASE_URL) {
+      console.warn('NEXT_PUBLIC_API_URL is not set. Using fallback: http://localhost:5000');
+    }
+    const res = await fetch(`${API_BASE_URL}/api/categories`, {
       cache: 'force-cache', // Categories are less likely to change
     });
     if (!res.ok) throw new Error('Failed to fetch categories');
@@ -51,7 +63,10 @@ export async function fetchCategories(): Promise<Category[]> {
 
 export async function fetchOrders(token: string): Promise<Order[]> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
+    if (!API_BASE_URL) {
+      console.warn('NEXT_PUBLIC_API_URL is not set. Using fallback: http://localhost:5000');
+    }
+    const res = await fetch(`${API_BASE_URL}/api/orders`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

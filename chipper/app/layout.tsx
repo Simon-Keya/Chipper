@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
+import ThemeClient from '../components/ThemeClient'; // 👈 new client component
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://chipper-store.com'),
   title: {
     default: 'Chipper - Quality Products for All',
     template: '%s | Chipper',
@@ -30,26 +32,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="corporate">
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className={`${inter.className} bg-base-100 text-neutral-content min-h-screen flex flex-col`}>
-        <Header />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: 'Chipper',
-              url: 'https://chipper-store.com',
-            }),
-          }}
-        />
-      </body>
-    </html>
+    <body className={`${inter.className} bg-base-100 text-neutral-content min-h-screen flex flex-col`}>
+      <ThemeClient /> {/* 👈 applies theme safely after hydration */}
+      <Header />
+      <main className="flex-grow">{children}</main>
+      <Footer />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Chipper',
+            url: 'https://chipper-store.com',
+          }),
+        }}
+      />
+    </body>
   );
 }
