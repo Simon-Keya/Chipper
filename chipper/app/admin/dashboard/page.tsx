@@ -1,8 +1,10 @@
 'use client';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import { fetchOrders } from '../../../lib/api';
+import { disconnectSocket, initSocket } from '../../../lib/socket';
 import { Order } from '../../../lib/types';
 
 export default function AdminDashboard() {
@@ -11,9 +13,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) router.push('/admin/login');
+    if (!token) {
+      router.push('/admin/login');
+      return;
+    }
 
-    const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+    const socket = initSocket();
     socket.on('new-order', (order: Order) => {
       setOrders((prev) => [order, ...prev]);
     });
@@ -21,15 +26,10 @@ export default function AdminDashboard() {
       console.log(`Product ${productId} stock updated to ${stock}`);
     });
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setOrders(data))
-      .catch(() => router.push('/admin/login'));
+    fetchOrders(token).then(setOrders).catch(() => router.push('/admin/login'));
 
     return () => {
-      socket.disconnect();
+      disconnectSocket();
     };
   }, [router]);
 
@@ -51,9 +51,7 @@ export default function AdminDashboard() {
             <tr>
               <th className="text-neutral-content">ID</th>
               <th className="text-neutral-content">Product</th>
-              <th className="text-neutral-content">Customer</th>
-              <th className="text-neutral-content">Status</th>
-              <th className="text-neutral-content">Actions</th>
+              <th className="text-neutral-content">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -72,15 +70,7 @@ export default function AdminDashboard() {
                     {order.product.name}
                   </div>
                 </td>
-                <td>{order.customerDetails}</td>
-                <td>
-                  <span className={`badge ${order.status === 'Pending' ? 'badge-warning' : 'badge-success'}`}>
-                    {order.status}
-                  </span>
-                </td>
-                <td>
-                  <button className="btn btn-sm btn-outline btn-primary">Update Status</button>
-                </td>
+                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
