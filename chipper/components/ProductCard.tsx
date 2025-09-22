@@ -1,4 +1,5 @@
 import { Product } from "@/lib/types";
+import Image from "next/image"; // Import the Image component
 import Link from "next/link";
 
 interface ProductCardProps {
@@ -9,10 +10,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-all">
       <figure className="p-4">
-        <img
+        <Image
           src={product.imageUrl}
           alt={product.name}
-          className="rounded-xl h-40 object-cover"
+          width={160} // Added width
+          height={160} // Added height
+          className="rounded-xl h-40 w-40 object-cover"
         />
       </figure>
       <div className="card-body p-4">

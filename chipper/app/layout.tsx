@@ -8,7 +8,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://chipper-store.com'),
+  metadataBase: new URL('https://chipper.vercel.app'),
   title: {
     default: 'Chipper - Quality Products for All',
     template: '%s | Chipper',
