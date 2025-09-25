@@ -1,8 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
-import ThemeClient from '../components/ThemeClient'; // 👈 new client component
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -32,22 +32,24 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <body className={`${inter.className} bg-base-100 text-neutral-content min-h-screen flex flex-col`}>
-      <ThemeClient /> {/* 👈 applies theme safely after hydration */}
-      <Header />
-      <main className="flex-grow">{children}</main>
-      <Footer />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'WebSite',
-            name: 'Chipper',
-            url: 'https://chipper-store.com',
-          }),
-        }}
-      />
-    </body>
+    // Re-add data-theme to ensure styles load correctly on the server
+    <html lang="en" data-theme="dark">
+      <body className={`${inter.className} bg-base-100 text-neutral-content min-h-screen flex flex-col`}>
+        <Header />
+        <main className="flex-grow">{children}</main>
+        <Footer />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Chipper',
+              url: 'https://chipper-store.com',
+            }),
+          }}
+        />
+      </body>
+    </html>
   );
 }

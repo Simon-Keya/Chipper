@@ -1,8 +1,4 @@
+@import "tailwindcss";
 @import "tailwindcss/preflight";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-
-/*
-  Add any custom global styles here, but be mindful of overriding DaisyUI themes.
-  For most cases, it's best to use Tailwind utility classes directly in your components.
-*/
