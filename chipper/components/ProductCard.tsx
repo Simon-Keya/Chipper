@@ -1,5 +1,5 @@
 import { Product } from "@/lib/types";
-import Image from "next/image"; // Import the Image component
+import Image from "next/image";
 import Link from "next/link";
 
 interface ProductCardProps {
@@ -8,26 +8,36 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   return (
-    <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-all">
-      <figure className="p-4">
+    <div className="card bg-base-100 border border-base-200 shadow-md hover:shadow-xl transition-all rounded-2xl overflow-hidden">
+      {/* Product Image */}
+      <figure className="relative w-full h-48">
         <Image
           src={product.imageUrl}
           alt={product.name}
-          width={160} // Added width
-          height={160} // Added height
-          className="rounded-xl h-40 w-40 object-cover"
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 300px"
         />
       </figure>
-      <div className="card-body p-4">
-        <h2 className="card-title text-lg font-semibold">{product.name}</h2>
-        <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
+
+      {/* Product Info */}
+      <div className="card-body p-4 flex flex-col justify-between">
+        <div>
+          <h2 className="card-title text-lg font-semibold line-clamp-1">
+            {product.name}
+          </h2>
+          <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+            {product.description}
+          </p>
+        </div>
+
         <div className="mt-2 flex justify-between items-center">
           <span className="text-primary font-bold text-lg">
             ${product.price.toFixed(2)}
           </span>
           <Link
             href={`/products/${product.id}`}
-            className="btn btn-sm btn-primary"
+            className="btn btn-sm btn-primary hover:btn-accent"
           >
             View
           </Link>

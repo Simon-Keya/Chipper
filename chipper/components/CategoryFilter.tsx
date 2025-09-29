@@ -15,23 +15,28 @@ export default function CategoryFilter({
 }: CategoryFilterProps) {
   return (
     <div className="flex flex-wrap gap-2 mb-6">
+      {/* All Products */}
       <button
-        className={`btn btn-sm ${
-          selectedCategory === null ? 'btn-primary' : 'btn-outline btn-primary'
-        } hover:bg-primary hover:text-base-100 transition-colors duration-300`}
+        className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors duration-300 ${
+          selectedCategory === null
+            ? 'bg-primary text-white border-primary'
+            : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-white'
+        }`}
         onClick={() => onChange(null)}
-        aria-label="Show all products"
       >
         All
       </button>
+
+      {/* Individual Categories */}
       {categories.map((cat) => (
         <button
           key={cat.id}
-          className={`btn btn-sm ${
-            selectedCategory === cat.id ? 'btn-primary' : 'btn-outline btn-primary'
-          } hover:bg-primary hover:text-base-100 transition-colors duration-300`}
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors duration-300 ${
+            selectedCategory === cat.id
+              ? 'bg-primary text-white border-primary'
+              : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-white'
+          }`}
           onClick={() => onChange(cat.id)}
-          aria-label={`Filter by ${cat.name}`}
         >
           {cat.name}
         </button>
@@ -39,3 +44,4 @@ export default function CategoryFilter({
     </div>
   );
 }
+

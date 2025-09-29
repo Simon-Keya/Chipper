@@ -34,8 +34,7 @@ export default function CategoryForm({ token }: CategoryFormProps) {
       } else {
         await createCategory(name, token);
       }
-      setEditCategoryId(null);
-      setName('');
+      handleReset();
       window.location.reload();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to save category');
@@ -51,39 +50,49 @@ export default function CategoryForm({ token }: CategoryFormProps) {
   };
 
   return (
-    <form id="category-form" onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="label text-neutral-content font-medium">Category Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="input input-bordered w-full rounded-lg"
-          required
-          aria-required="true"
-        />
-      </div>
-      {error && <p className="text-error text-sm">{error}</p>}
-      <div className="flex gap-4">
-        <button
-          type="submit"
-          className="btn btn-primary flex-1 rounded-lg hover:bg-accent transition-colors duration-300"
-          disabled={loading}
-          aria-label={editCategoryId ? 'Update Category' : 'Create Category'}
-        >
-          {loading ? 'Saving...' : editCategoryId ? 'Update Category' : 'Create Category'}
-        </button>
-        {editCategoryId && (
+    <div className="card bg-base-100 shadow-lg p-6 rounded-2xl border border-base-200">
+      <h2 className="text-xl font-semibold mb-4">
+        {editCategoryId ? 'Edit Category' : 'Create Category'}
+      </h2>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Category Name */}
+        <div>
+          <label className="label font-medium">Category Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="input input-bordered w-full"
+            placeholder="Enter category name"
+            required
+          />
+        </div>
+
+        {/* Error Message */}
+        {error && <p className="text-error text-sm">{error}</p>}
+
+        {/* Buttons */}
+        <div className="flex gap-4">
           <button
-            type="button"
-            className="btn btn-outline btn-secondary flex-1 rounded-lg"
-            onClick={handleReset}
-            aria-label="Cancel Edit"
+            type="submit"
+            className="btn btn-primary flex-1"
+            disabled={loading}
           >
-            Cancel
+            {loading ? 'Saving...' : editCategoryId ? 'Update Category' : 'Create Category'}
           </button>
-        )}
-      </div>
-    </form>
+          {editCategoryId && (
+            <button
+              type="button"
+              className="btn btn-outline flex-1"
+              onClick={handleReset}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }
+
