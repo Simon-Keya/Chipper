@@ -1,4 +1,27 @@
-@import "tailwindcss";
-@import "tailwindcss/preflight";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+/* app/globals.css */
+
+/* 1. Use the @tailwind directives instead of @import statements.
+   These directives are properly handled by Next.js and PostCSS during the build. */
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+   
+   /* 2. Add your custom global styles and overrides below the directives.
+      Ensure the html and body elements use the correct Tailwind/DaisyUI classes */
+   html {
+     /* Set scrolling behavior smoothly for better UX */
+     scroll-behavior: smooth;
+   }
+   
+   body {
+     /* Apply the default font and ensure the app takes full viewport height */
+     min-height: 100vh;
+     /* Use the specified theme classes for full page styling */
+     @apply font-sans bg-base-100 text-base-content;
+   }
+   
+   /* Custom utility class example for focus states */
+   .focus-ring {
+     @apply ring ring-primary ring-offset-2 ring-offset-base-100;
+   }
+   
