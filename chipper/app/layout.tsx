@@ -13,7 +13,8 @@ export const metadata: Metadata = {
     default: 'Chipper - Quality Products for All',
     template: '%s | Chipper',
   },
-  description: 'Shop a wide range of products at Chipper, from electronics to clothing.',
+  description:
+    'Shop a wide range of products at Chipper, from electronics to clothing.',
   keywords: 'ecommerce, products, Chipper, shopping',
   openGraph: {
     title: 'Chipper',
@@ -30,14 +31,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    // Re-add data-theme to ensure styles load correctly on the server
-    <html lang="en" data-theme="dark">
-      <body className={`${inter.className} bg-base-100 text-neutral-content min-h-screen flex flex-col`}>
+    <html lang="en" data-theme="chipperDark">
+      <body
+        className={`${inter.className} bg-base-100 text-base-content min-h-screen flex flex-col`}
+      >
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />
+
+        {/* JSON-LD SEO structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -3,9 +3,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { fetchOrders } from '../../../lib/api';
-import { disconnectSocket, initSocket } from '../../../lib/socket';
-import { Order } from '../../../lib/types';
+import { fetchOrders } from '../../lib/api';
+import { disconnectSocket, initSocket } from '../../lib/socket';
+import { Order } from '../../lib/types';
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
