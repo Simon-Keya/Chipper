@@ -11,7 +11,7 @@ const isFetchError = (error: unknown): error is FetchError => {
   return error instanceof Error && 'cause' in error;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL ='http://localhost:5000';
 
 export async function fetchProducts(categoryId?: string): Promise<Product[]> {
   try {
