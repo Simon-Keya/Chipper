@@ -8,7 +8,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   return (
-    <div className="card bg-base-100 border border-base-200 shadow-md hover:shadow-xl transition-all rounded-2xl overflow-hidden">
+    <div className="card bg-base-100 border border-base-200 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all rounded-2xl overflow-hidden">
       {/* Product Image */}
       <figure className="relative w-full h-48">
         <Image
@@ -26,7 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <h2 className="card-title text-lg font-semibold line-clamp-1">
             {product.name}
           </h2>
-          <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+          <p className="text-sm text-neutral-content line-clamp-2 mb-2">
             {product.description}
           </p>
         </div>
@@ -37,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
           <Link
             href={`/products/${product.id}`}
-            className="btn btn-sm btn-primary hover:btn-accent"
+            className="btn btn-sm btn-primary rounded-full hover:btn-accent transition-all"
           >
             View
           </Link>
