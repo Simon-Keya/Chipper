@@ -1,97 +1,72 @@
 'use client';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { fetchCategories, fetchProducts } from '../../../lib/api';
-import { Category, Product } from '../../../lib/types';
+import { fetchProductById } from '../../../lib/api';
+import { Product } from '../../../lib/types';
 
-export default function ProductsPage() {
-  const searchParams = useSearchParams();
-  const categoryId = searchParams.get('categoryId');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+export default function ProductDetailsPage() {
+  const { id } = useParams<{ id: string }>();
+  const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      const [fetchedProducts, fetchedCategories] = await Promise.all([
-        fetchProducts(categoryId || undefined),
-        fetchCategories(),
-      ]);
-      setProducts(fetchedProducts);
-      setCategories(fetchedCategories);
-    };
-    loadData();
-  }, [categoryId]);
+    if (id) {
+      fetchProductById(id).then(setProduct);
+    }
+  }, [id]);
+
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-center text-lg text-neutral-content">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 bg-base-100">
-      <h1 className="text-4xl font-bold text-center mb-8 text-neutral-content">Our Products</h1>
-      <div className="flex flex-wrap gap-4 mb-8 justify-center">
-        <Link
-          href="/products"
-          className={`btn btn-outline btn-primary hover:bg-primary hover:text-base-100 transition-colors duration-300 ${
-            !categoryId ? 'btn-active' : ''
-          }`}
-          aria-label="Show all products"
-        >
-          All Products
-        </Link>
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            href={`/products?categoryId=${category.id}`}
-            className={`btn btn-outline btn-primary hover:bg-primary hover:text-base-100 transition-colors duration-300 ${
-              categoryId === String(category.id) ? 'btn-active' : ''
-            }`}
-            aria-label={`Filter by ${category.name}`}
-          >
-            {category.name}
-          </Link>
-        ))}
+      <div className="card bg-neutral shadow-xl">
+        <figure>
+          <Image
+            src={product.imageurl}
+            alt={product.name}
+            width={600}
+            height={400}
+            className="object-cover w-full h-96"
+          />
+        </figure>
+        <div className="card-body">
+          <h1 className="card-title text-3xl text-neutral-content">{product.name}</h1>
+          <p className="text-neutral-content">${product.price.toFixed(2)}</p>
+          <p className="text-sm text-neutral-content/80">
+            Category: {product.category.name}
+          </p>
+          {product.description && (
+            <p className="mt-4 text-neutral-content">{product.description}</p>
+          )}
+          <p className="mt-2 text-neutral-content">
+            <strong>Stock:</strong> {product.stock}
+          </p>
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="card bg-neutral shadow-xl hover:shadow-2xl transition-shadow duration-300">
-            <figure>
-              <Image
-                src={`${product.imageUrl}?w=300&h=200&c=fill&q=80`}
-                alt={product.name}
-                width={300}
-                height={200}
-                className="object-cover w-full h-48"
-              />
-            </figure>
-            <div className="card-body">
-              <h2 className="card-title text-lg text-neutral-content">{product.name}</h2>
-              <p className="text-neutral-content">${product.price.toFixed(2)}</p>
-              <p className="text-sm text-neutral-content/80">{product.category.name}</p>
-              <div className="card-actions justify-end">
-                <Link href={`/products/${product.id}`} className="btn btn-primary btn-sm">
-                  View Details
-                </Link>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+
+      {/* SEO Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'ItemList',
-            itemListElement: products.map((product, index) => ({
-              '@type': 'ListItem',
-              position: index + 1,
-              item: {
-                '@type': 'Product',
-                name: product.name,
-                url: `https://chipper-store.com/products/${product.id}`,
-                image: `${product.imageUrl}?w=300&h=200&c=fill&q=80`,
-                description: product.description,
-              },
-            })),
+            '@type': 'Product',
+            name: product.name,
+            image: product.image,
+            description: product.description,
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: 'USD',
+              price: product.price,
+              availability: product.stock > 0 ? 'InStock' : 'OutOfStock',
+              url: `https://chipper-store.com/products/${product.id}`,
+            },
           }),
         }}
       />

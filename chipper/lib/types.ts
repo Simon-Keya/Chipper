@@ -3,7 +3,8 @@ export interface Product {
   name: string;
   description?: string;
   price: number;
-  imageUrl: string; // Cloudinary URL, e.g., https://res.cloudinary.com/<cloud-name>/image/upload/...
+  image: string;
+  imageurl: string;
   stock: number;
   categoryId: number;
   category: Category;

@@ -162,7 +162,7 @@ export default function CategoriesAdminServer({ token }: { token: string }) {
       ) : (
         <div className="text-center py-6">
           <p className="text-neutral-content text-lg mb-4">
-            No categories found. Click "Add New Category" above to create one.
+            No categories found. Click Add New Category above to create one.
           </p>
         </div>
       )}

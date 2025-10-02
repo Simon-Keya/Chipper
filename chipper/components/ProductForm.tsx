@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createProduct, updateProduct } from '../lib/api';
 import { Category } from '../lib/types';
@@ -16,11 +17,12 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [editProductId, setEditProductId] = useState<number | null>(null);
 
-  // Handle edit product event
+  // ✅ Handle edit product event
   useEffect(() => {
     const handleEdit = (event: Event) => {
       const product = (event as CustomEvent).detail;
@@ -31,10 +33,20 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
       setCategoryId(product.categoryId.toString());
       setDescription(product.description || '');
       setImage(null);
+      setPreview(product.image || null);
     };
     window.addEventListener('edit-product', handleEdit);
     return () => window.removeEventListener('edit-product', handleEdit);
   }, []);
+
+  // ✅ Helper: convert file → base64
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,22 +54,17 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
     setLoading(true);
 
     try {
-      let imageUrl = editProductId ? (await fetchProduct(editProductId)).imageUrl : '';
+      let base64Image: string | undefined;
 
-      // Handle image upload if new file selected
+      // Require image if creating new product
+      if (!editProductId && !image) {
+        setError('Please upload an image when creating a new product.');
+        setLoading(false);
+        return;
+      }
+
       if (image) {
-        const formData = new FormData();
-        formData.append('file', image);
-        formData.append('upload_preset', 'chipper_products');
-
-        const uploadRes = await fetch(
-          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-          { method: 'POST', body: formData }
-        );
-
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.error?.message || 'Image upload failed');
-        imageUrl = uploadData.secure_url;
+        base64Image = await fileToBase64(image);
       }
 
       const productData = {
@@ -66,7 +73,7 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
         stock: parseInt(stock),
         categoryId: parseInt(categoryId),
         description,
-        imageUrl,
+        image: base64Image, // ⛔ undefined if no update
       };
 
       if (editProductId) {
@@ -92,7 +99,17 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
     setCategoryId('');
     setDescription('');
     setImage(null);
+    setPreview(null);
     setError('');
+  };
+
+  const handleFileChange = (file: File | null) => {
+    setImage(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    } else {
+      setPreview(null);
+    }
   };
 
   return (
@@ -108,7 +125,6 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Left side */}
         <div className="space-y-4">
-          {/* Product Name */}
           <div>
             <label className="label font-medium">Product Name</label>
             <input
@@ -121,7 +137,6 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
             />
           </div>
 
-          {/* Price with Ksh prefix */}
           <div>
             <label className="label font-medium">Price (Ksh)</label>
             <div className="relative">
@@ -139,7 +154,6 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
             </div>
           </div>
 
-          {/* Stock */}
           <div>
             <label className="label font-medium">Stock</label>
             <input
@@ -156,7 +170,6 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
 
         {/* Right side */}
         <div className="space-y-4">
-          {/* Category */}
           <div>
             <label className="label font-medium">Category</label>
             <select
@@ -174,7 +187,6 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
             </select>
           </div>
 
-          {/* Description */}
           <div>
             <label className="label font-medium">Description</label>
             <textarea
@@ -185,23 +197,32 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
             />
           </div>
 
-          {/* Image Upload */}
           <div>
             <label className="label font-medium">Image</label>
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
+              onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
               className="file-input file-input-bordered w-full rounded-lg"
             />
+            {preview && (
+              <div className="mt-3">
+                <Image
+                  src={preview}
+                  alt="Preview"
+                  width={112} // Tailwind h-28
+                  height={112} // Tailwind w-28
+                  className="object-cover rounded-lg border"
+                  unoptimized // ✅ needed for blob:// and data: URLs
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Error message */}
       {error && <p className="text-error bg-error/10 p-2 rounded-md">{error}</p>}
 
-      {/* Buttons */}
       <div className="flex gap-4">
         <button
           type="submit"
@@ -222,13 +243,4 @@ export default function ProductForm({ categories, token }: ProductFormProps) {
       </div>
     </form>
   );
-}
-
-// Helper to fetch product for editing
-async function fetchProduct(id: number): Promise<{ imageUrl: string }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`, {
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error('Failed to fetch product');
-  return await res.json();
 }

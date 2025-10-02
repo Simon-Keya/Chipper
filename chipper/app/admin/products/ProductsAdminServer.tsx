@@ -10,7 +10,6 @@ export default function ProductsAdminServer({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -57,14 +56,13 @@ export default function ProductsAdminServer({ token }: { token: string }) {
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold text-neutral-content">
-            {editingProduct ? "Edit Product" : "Add Product"}
+            Add / Edit Product
           </h2>
 
           {!showForm ? (
             <button
               className="btn btn-primary btn-sm rounded-full"
               onClick={() => {
-                setEditingProduct(null);
                 setShowForm(true);
               }}
             >
@@ -80,13 +78,7 @@ export default function ProductsAdminServer({ token }: { token: string }) {
           )}
         </div>
 
-        {showForm && (
-          <ProductForm
-            categories={categories}
-            token={token}
-            initialData={editingProduct || undefined}
-          />
-        )}
+        {showForm && <ProductForm categories={categories} token={token} />}
       </div>
 
       {/* Product List */}
@@ -127,11 +119,15 @@ export default function ProductsAdminServer({ token }: { token: string }) {
                     <button
                       className="btn btn-primary btn-sm rounded-full hover:btn-accent"
                       onClick={() => {
-                        setEditingProduct(product);
                         setShowForm(true);
                         document
                           .getElementById("product-form")
                           ?.scrollIntoView({ behavior: "smooth" });
+
+                        // Dispatch event for ProductForm to pick up
+                        window.dispatchEvent(
+                          new CustomEvent("edit-product", { detail: product })
+                        );
                       }}
                     >
                       Edit
