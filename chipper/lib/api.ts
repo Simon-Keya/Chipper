@@ -2,13 +2,13 @@ import { Category, Order, Product } from './types';
 
 const API_BASE_URL = 'http://localhost:5001';
 
-interface ProductPayload {
+export interface ProductPayload {
   name: string;
   price: number;
   stock: number;
   categoryId: number;
   description: string;
-  image?: string; // raw/base64 or Cloudinary URL
+  image?: string; // Cloudinary URL or raw string
 }
 
 // -------------------- PRODUCTS --------------------
@@ -27,40 +27,56 @@ export async function fetchProducts(categoryId?: string): Promise<Product[]> {
   }
 }
 
-// Main function
 export async function fetchProduct(id: string): Promise<Product> {
   const res = await fetch(`${API_BASE_URL}/api/products/${id}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to fetch product: ${res.statusText}`);
   return await res.json();
 }
 
-// Alias for clarity (uses fetchProduct under the hood)
 export async function fetchProductById(id: string): Promise<Product> {
   return fetchProduct(id);
 }
 
-export async function createProduct(product: ProductPayload, token: string): Promise<Product> {
+/**
+ * Create product
+ * Accepts either:
+ *  - ProductPayload (JSON body)
+ *  - FormData (multipart/form-data)
+ */
+export async function createProduct(product: ProductPayload | FormData, token: string): Promise<Product> {
+  const isFormData = product instanceof FormData;
+
   const res = await fetch(`${API_BASE_URL}/api/products`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(product),
+    body: isFormData ? product : JSON.stringify(product),
   });
+
   if (!res.ok) throw new Error(`Failed to create product: ${res.statusText}`);
   return await res.json();
 }
 
-export async function updateProduct(id: number, product: ProductPayload, token: string): Promise<Product> {
+/**
+ * Update product
+ * Accepts either:
+ *  - ProductPayload (JSON body)
+ *  - FormData (multipart/form-data)
+ */
+export async function updateProduct(id: number, product: ProductPayload | FormData, token: string): Promise<Product> {
+  const isFormData = product instanceof FormData;
+
   const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(product),
+    body: isFormData ? product : JSON.stringify(product),
   });
+
   if (!res.ok) throw new Error(`Failed to update product: ${res.statusText}`);
   return await res.json();
 }

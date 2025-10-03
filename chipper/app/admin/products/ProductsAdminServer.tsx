@@ -1,47 +1,65 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import ProductForm from "../../../components/ProductForm";
-import { Category, Product } from "../../../lib/types";
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import ProductForm from '../../../components/ProductForm';
+import { deleteProduct, fetchCategories, fetchProducts } from '../../../lib/api';
+import { Category, Product } from '../../../lib/types';
 
-export default function ProductsAdminServer({ token }: { token: string }) {
+interface ProductsAdminServerProps {
+  token: string;
+}
+
+export default function ProductsAdminServer({ token }: ProductsAdminServerProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        if (!productsRes.ok || !categoriesRes.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const productsData = await productsRes.json();
-        const categoriesData = await categoriesRes.json();
-
-        setProducts(productsData || []);
-        setCategories(categoriesData || []);
-      } catch (err) {
-        console.error("Failed to load products/categories:", err);
-        setError("Could not load products. You can still create one below.");
-      } finally {
-        setLoading(false);
-      }
+  const loadProducts = async () => {
+    try {
+      const data = await fetchProducts();
+      setProducts(data);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Could not load products. Try again.');
     }
+  };
 
-    loadData();
-  }, [token]);
+  const loadCategories = async () => {
+    try {
+      const data = await fetchCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await Promise.all([loadProducts(), loadCategories()]);
+      setLoading(false);
+    })();
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await deleteProduct(id, token);
+      await loadProducts();
+    } catch (err) {
+      console.error('Error deleting product:', err);
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    setShowForm(true);
+    document.getElementById('product-form')?.scrollIntoView({ behavior: 'smooth' });
+    const event = new CustomEvent('edit-product', { detail: product });
+    window.dispatchEvent(event);
+  };
 
   return (
     <div className="container mx-auto px-4 py-12 bg-base-100">
@@ -49,7 +67,7 @@ export default function ProductsAdminServer({ token }: { token: string }) {
         Manage Products
       </h1>
 
-      {/* Product Form Section (button + form inside card, same as Categories) */}
+      {/* Product Form Section */}
       <div
         id="product-form"
         className="card bg-base-200 shadow-xl p-6 mb-12 rounded-2xl border border-base-300"
@@ -58,13 +76,10 @@ export default function ProductsAdminServer({ token }: { token: string }) {
           <h2 className="text-2xl font-semibold text-neutral-content">
             Add / Edit Product
           </h2>
-
           {!showForm ? (
             <button
               className="btn btn-primary btn-sm rounded-full"
-              onClick={() => {
-                setShowForm(true);
-              }}
+              onClick={() => setShowForm(true)}
             >
               ➕ Add New Product
             </button>
@@ -77,8 +92,7 @@ export default function ProductsAdminServer({ token }: { token: string }) {
             </button>
           )}
         </div>
-
-        {showForm && <ProductForm categories={categories} token={token} />}
+        {showForm && <ProductForm onSuccess={loadProducts} />}
       </div>
 
       {/* Product List */}
@@ -93,67 +107,42 @@ export default function ProductsAdminServer({ token }: { token: string }) {
           <p className="text-error mb-4">{error}</p>
         </div>
       ) : products.length > 0 ? (
-        <div className="overflow-x-auto bg-base-200 rounded-2xl shadow-lg border border-base-300">
-          <table className="table table-zebra w-full">
-            <thead>
-              <tr className="bg-base-300">
-                <th className="text-neutral font-semibold">ID</th>
-                <th className="text-neutral font-semibold">Name</th>
-                <th className="text-neutral font-semibold">Price</th>
-                <th className="text-neutral font-semibold">Category</th>
-                <th className="text-neutral font-semibold text-center">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="hover:bg-base-100">
-                  <td>{product.id}</td>
-                  <td className="line-clamp-1 font-medium">{product.name}</td>
-                  <td className="text-success font-semibold">
-                    ${product.price.toFixed(2)}
-                  </td>
-                  <td>{product.category?.name}</td>
-                  <td className="flex gap-2 justify-center">
-                    <button
-                      className="btn btn-primary btn-sm rounded-full hover:btn-accent"
-                      onClick={() => {
-                        setShowForm(true);
-                        document
-                          .getElementById("product-form")
-                          ?.scrollIntoView({ behavior: "smooth" });
-
-                        // Dispatch event for ProductForm to pick up
-                        window.dispatchEvent(
-                          new CustomEvent("edit-product", { detail: product })
-                        );
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-error btn-sm rounded-full"
-                      onClick={async () => {
-                        if (confirm(`Delete ${product.name}?`)) {
-                          await fetch(
-                            `${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}`,
-                            {
-                              method: "DELETE",
-                              headers: { Authorization: `Bearer ${token}` },
-                            }
-                          );
-                          window.location.reload();
-                        }
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((p) => (
+            <div key={p.id} className="card bg-base-200 shadow-md p-4 rounded-2xl border border-base-300">
+              {p.imageUrl && (
+                <div className="relative w-full h-48 mb-4">
+                  <Image
+                    src={p.imageUrl}
+                    alt={p.name}
+                    fill
+                    className="object-cover rounded-xl"
+                  />
+                </div>
+              )}
+              <h3 className="font-semibold text-lg">{p.name}</h3>
+              <p className="text-sm text-gray-500 line-clamp-2">{p.description}</p>
+              <p className="mt-2 font-bold text-success">Ksh.{p.price.toFixed(2)}</p>
+              <p className="text-sm">Stock: {p.stock}</p>
+              <p className="text-sm">
+                Category: {categories.find((c) => c.id === p.categoryId)?.name || 'Unknown'}
+              </p>
+              <div className="mt-4 flex gap-2 justify-end">
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="btn btn-sm btn-primary rounded-full"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="btn btn-sm btn-error rounded-full"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="text-center py-6">

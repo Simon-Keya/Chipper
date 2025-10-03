@@ -55,7 +55,7 @@ export default function ProductsPage() {
           >
             <figure>
               <Image
-                src={product.imageurl}
+                src={product.imageUrl}
                 alt={product.name}
                 width={300}
                 height={200}
@@ -94,7 +94,7 @@ export default function ProductsPage() {
                 '@type': 'Product',
                 name: product.name,
                 url: `https://chipper-store.com/products/${product.id}`,
-                image: product.imageurl,
+                image: product.imageUrl,
                 description: product.description,
               },
             })),

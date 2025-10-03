@@ -28,7 +28,7 @@ export default function ProductDetailsPage() {
       <div className="card bg-neutral shadow-xl">
         <figure>
           <Image
-            src={product.imageurl}
+            src={product.imageUrl}
             alt={product.name}
             width={600}
             height={400}
