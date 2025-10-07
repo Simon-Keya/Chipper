@@ -20,7 +20,7 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
 
-  // Load categories
+  // Load categories + listen for edit events
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -97,59 +97,62 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="card bg-base-200 p-6 shadow-md mb-6"
+      className="card bg-base-100 border border-base-300 shadow-xl p-8 mb-8 rounded-2xl"
     >
-      <h2 className="text-xl font-bold mb-4">
-        {editProductId ? 'Edit Product' : 'Add Product'}
+      <h2 className="text-2xl font-bold mb-6 text-primary">
+        {editProductId ? '✏️ Edit Product' : '➕ Add New Product'}
       </h2>
 
       {/* Name */}
-      <div className="mb-4">
-        <label className="block mb-1">Name</label>
+      <div className="mb-5">
+        <label className="block mb-2 font-medium">Product Name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="input input-bordered w-full"
+          placeholder="e.g. Premium T-shirt"
           required
         />
       </div>
 
-      {/* Price */}
-      <div className="mb-4">
-        <label className="block mb-1">Price</label>
-        <input
-          type="number"
-          step="0.01"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="input input-bordered w-full"
-          required
-        />
-      </div>
-
-      {/* Stock */}
-      <div className="mb-4">
-        <label className="block mb-1">Stock</label>
-        <input
-          type="number"
-          value={stock}
-          onChange={(e) => setStock(e.target.value)}
-          className="input input-bordered w-full"
-          required
-        />
+      {/* Price & Stock in grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
+        <div>
+          <label className="block mb-2 font-medium">Price (Ksh)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="input input-bordered w-full"
+            placeholder="e.g. 1500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block mb-2 font-medium">Stock</label>
+          <input
+            type="number"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+            className="input input-bordered w-full"
+            placeholder="e.g. 50"
+            required
+          />
+        </div>
       </div>
 
       {/* Category */}
-      <div className="mb-4">
-        <label className="block mb-1">Category</label>
+      <div className="mb-5">
+        <label className="block mb-2 font-medium">Category</label>
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
           className="select select-bordered w-full"
           required
         >
-          <option value="">Select category</option>
+          <option value="">Select a category</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -159,20 +162,23 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
       </div>
 
       {/* Description */}
-      <div className="mb-4">
-        <label className="block mb-1">Description</label>
+      <div className="mb-5">
+        <label className="block mb-2 font-medium">Description</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="textarea textarea-bordered w-full"
+          rows={3}
+          placeholder="Write a short description..."
         />
       </div>
 
-      {/* Image */}
-      <div className="mb-4">
-        <label className="block mb-1">Image</label>
+      {/* Image Upload */}
+      <div className="mb-6">
+        <label className="block mb-2 font-medium">Product Image</label>
         <input
           type="file"
+          accept="image/*"
           onChange={(e) => {
             const file = e.target.files?.[0] || null;
             setImage(file);
@@ -181,22 +187,34 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
           className="file-input file-input-bordered w-full"
         />
         {preview && (
-          <div className="mt-2">
+          <div className="mt-4">
             <Image
               src={preview}
               alt="Preview"
-              width={128}
-              height={128}
-              className="object-cover rounded"
+              width={200}
+              height={200}
+              className="object-cover rounded-xl border shadow-md"
               unoptimized
             />
           </div>
         )}
       </div>
 
-      <button type="submit" className="btn btn-primary">
-        {editProductId ? 'Update Product' : 'Create Product'}
-      </button>
+      {/* Buttons */}
+      <div className="flex gap-4">
+        <button type="submit" className="btn btn-primary flex-1">
+          {editProductId ? '💾 Update Product' : '🚀 Create Product'}
+        </button>
+        {editProductId && (
+          <button
+            type="button"
+            className="btn btn-secondary flex-1"
+            onClick={resetForm}
+          >
+            🔄 Cancel Edit
+          </button>
+        )}
+      </div>
     </form>
   );
 }
