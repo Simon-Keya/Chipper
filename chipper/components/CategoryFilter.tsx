@@ -19,8 +19,8 @@ export default function CategoryFilter({
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors duration-300 ${
           selectedCategory === null
-            ? 'bg-primary text-white border-primary'
-            : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-white'
+            ? 'bg-primary text-amber-600 border-primary'
+            : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-amber-500'
         }`}
         onClick={() => onChange(null)}
       >
@@ -33,8 +33,8 @@ export default function CategoryFilter({
           key={cat.id}
           className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors duration-300 ${
             selectedCategory === cat.id
-              ? 'bg-primary text-white border-primary'
-              : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-white'
+              ? 'bg-primary text-amber-600 border-primary'
+              : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-amber-500'
           }`}
           onClick={() => onChange(cat.id)}
         >

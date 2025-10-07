@@ -19,6 +19,7 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load categories + listen for edit events
   useEffect(() => {
@@ -62,14 +63,17 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
     setDescription('');
     setImage(null);
     setPreview(null);
+    setIsLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const token = localStorage.getItem('token');
     if (!token) {
       console.error('No token found. Please log in.');
+      setIsLoading(false);
       return;
     }
 
@@ -91,130 +95,162 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
       onSuccess();
     } catch (error) {
       console.error('Error saving product:', error);
+      setIsLoading(false); // Ensure loading state is reset on error
     }
   };
 
+  const inputClass = "input input-bordered w-full input-lg transition duration-150 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 focus:shadow-md rounded-xl";
+  const labelClass = "block mb-2 font-semibold text-neutral-content/90 text-sm";
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="card bg-base-100 border border-base-300 shadow-xl p-8 mb-8 rounded-2xl"
-    >
-      <h2 className="text-2xl font-bold mb-6 text-primary">
-        {editProductId ? '✏️ Edit Product' : '➕ Add New Product'}
-      </h2>
+    <div className="max-w-4xl mx-auto">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-base-100 p-6 sm:p-8 lg:p-10 rounded-2xl shadow-2xl border border-base-200"
+      >
+        {/* Form Header */}
+        <h2 className="text-3xl font-extrabold mb-8 text-neutral-content border-b pb-4 border-base-200">
+          {editProductId ? '✏️ Edit Product Details' : '➕ Add New Product Listing'}
+        </h2>
+        
+        {/* Grid Container for two columns on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Column 1: Core Details */}
+            <div className='lg:col-span-1'>
+                
+                {/* Name */}
+                <div className="mb-6">
+                  <label className={labelClass}>Product Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Premium Cotton T-shirt"
+                    required
+                  />
+                </div>
 
-      {/* Name */}
-      <div className="mb-5">
-        <label className="block mb-2 font-medium">Product Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="input input-bordered w-full"
-          placeholder="e.g. Premium T-shirt"
-          required
-        />
-      </div>
+                {/* Price & Stock */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className={labelClass}>Price (Ksh)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. 1500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Stock Quantity</label>
+                    <input
+                      type="number"
+                      value={stock}
+                      onChange={(e) => setStock(e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. 50"
+                      required
+                    />
+                  </div>
+                </div>
 
-      {/* Price & Stock in grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
-        <div>
-          <label className="block mb-2 font-medium">Price (Ksh)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="input input-bordered w-full"
-            placeholder="e.g. 1500"
-            required
-          />
+                {/* Category */}
+                <div className="mb-6">
+                  <label className={labelClass}>Category</label>
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className={`select select-bordered w-full select-lg transition duration-150 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 focus:shadow-md rounded-xl`}
+                    required
+                  >
+                    <option value="" disabled>Select a category</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+            </div>
+
+            {/* Column 2: Description and Image */}
+            <div className='lg:col-span-1'>
+                {/* Description */}
+                <div className="mb-6">
+                  <label className={labelClass}>Detailed Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className={`textarea textarea-bordered w-full transition duration-150 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 focus:shadow-md rounded-xl h-36 resize-none`}
+                    rows={4}
+                    placeholder="Write a detailed product description..."
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div className="mb-6">
+                  <label className={labelClass}>Product Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setImage(file);
+                      setPreview(file ? URL.createObjectURL(file) : null);
+                    }}
+                    // Using neutral/base colors for file input for a cleaner look
+                    className="file-input file-input-bordered w-full file-input-md rounded-xl"
+                  />
+                </div>
+            </div>
         </div>
-        <div>
-          <label className="block mb-2 font-medium">Stock</label>
-          <input
-            type="number"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-            className="input input-bordered w-full"
-            placeholder="e.g. 50"
-            required
-          />
-        </div>
-      </div>
 
-      {/* Category */}
-      <div className="mb-5">
-        <label className="block mb-2 font-medium">Category</label>
-        <select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          className="select select-bordered w-full"
-          required
-        >
-          <option value="">Select a category</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Description */}
-      <div className="mb-5">
-        <label className="block mb-2 font-medium">Description</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="textarea textarea-bordered w-full"
-          rows={3}
-          placeholder="Write a short description..."
-        />
-      </div>
-
-      {/* Image Upload */}
-      <div className="mb-6">
-        <label className="block mb-2 font-medium">Product Image</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0] || null;
-            setImage(file);
-            setPreview(file ? URL.createObjectURL(file) : null);
-          }}
-          className="file-input file-input-bordered w-full"
-        />
+        {/* Image Preview - Full width below the main grid */}
         {preview && (
-          <div className="mt-4">
-            <Image
-              src={preview}
-              alt="Preview"
-              width={200}
-              height={200}
-              className="object-cover rounded-xl border shadow-md"
-              unoptimized
-            />
+          <div className="mt-4 mb-8 border-t border-base-200 pt-6">
+            <h3 className="font-semibold text-lg mb-4 text-neutral-content">Current Image Preview</h3>
+            <div className="relative w-48 h-48 border-4 border-base-300 rounded-xl overflow-hidden shadow-xl">
+              <Image
+                src={preview}
+                alt="Preview"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Buttons */}
-      <div className="flex gap-4">
-        <button type="submit" className="btn btn-primary flex-1">
-          {editProductId ? '💾 Update Product' : '🚀 Create Product'}
-        </button>
-        {editProductId && (
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-base-200">
           <button
-            type="button"
-            className="btn btn-secondary flex-1"
-            onClick={resetForm}
+            type="submit"
+            className="btn btn-warning btn-lg flex-1 text-white shadow-xl hover:bg-amber-600 transition duration-200"
+            disabled={isLoading}
           >
-            🔄 Cancel Edit
+            {isLoading ? (
+                <span className="loading loading-spinner"></span>
+            ) : (
+                editProductId ? '💾 Update Product' : '🚀 Create Product'
+            )}
           </button>
-        )}
-      </div>
-    </form>
+          {editProductId && (
+            <button
+              type="button"
+              className="btn btn-outline btn-neutral btn-lg flex-1 hover:bg-base-200"
+              onClick={resetForm}
+              disabled={isLoading}
+            >
+              🔄 Cancel Edit
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }
