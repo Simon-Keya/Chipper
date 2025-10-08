@@ -192,7 +192,7 @@ const Header = () => {
                     <ShoppingBag className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-gray-900">Menu</h2>
+                    <h2 className="font-bold text-gray-900">Chipper</h2>
                     <p className="text-xs text-gray-500">Navigation</p>
                   </div>
                 </div>
