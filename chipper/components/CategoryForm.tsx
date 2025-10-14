@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { PlusCircle, Save, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface CategoryFormProps {
   token: string;
@@ -30,7 +30,7 @@ export default function CategoryForm({ token, category }: CategoryFormProps) {
     setMessage(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
@@ -64,8 +64,13 @@ export default function CategoryForm({ token, category }: CategoryFormProps) {
 
       // Instead of reload — tell parent to refresh categories
       window.dispatchEvent(new CustomEvent("refresh-categories"));
-    } catch (err: any) {
-      setMessage(`❌ ${err.message || "Something went wrong."}`);
+    } catch (err: unknown) {
+      // ✅ Corrected type-safe error handling
+      if (err instanceof Error) {
+        setMessage(`❌ ${err.message}`);
+      } else {
+        setMessage("❌ Something went wrong.");
+      }
     } finally {
       setLoading(false);
     }
@@ -101,7 +106,9 @@ export default function CategoryForm({ token, category }: CategoryFormProps) {
         {/* Submit button */}
         <button
           type="submit"
-          className={`btn ${editCategoryId ? "btn-accent" : "btn-primary"} rounded-xl flex items-center gap-2 px-6`}
+          className={`btn ${
+            editCategoryId ? "btn-accent" : "btn-primary"
+          } rounded-xl flex items-center gap-2 px-6`}
           disabled={loading}
         >
           {loading ? (
