@@ -1,9 +1,4 @@
-"use client"
-
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
-export const runtime = "nodejs"
+"use client";
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -21,7 +16,9 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // ✅ Fetch data on the client only
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -30,14 +27,17 @@ export default function ProductsPage() {
           fetchProducts(categoryId?.toString()),
           fetchCategories(),
         ]);
-        setProducts(fetchedProducts);
-        setCategories(fetchedCategories);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+
+        setProducts(fetchedProducts || []);
+        setCategories(fetchedCategories || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load products.");
       } finally {
         setLoading(false);
       }
     };
+
     loadData();
   }, [categoryId]);
 
@@ -46,18 +46,24 @@ export default function ProductsPage() {
       ? `/products?categoryId=${newCategoryId}`
       : "/products";
     window.history.pushState({}, "", url);
-    setProducts([]); // Clear while fetching
+    setProducts([]);
     fetchProducts(newCategoryId?.toString()).then(setProducts);
   };
 
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-10 bg-base-100 min-h-screen">
-      {/* Page Title */}
       <h1 className="text-4xl font-extrabold text-center mb-10 text-primary">
         Explore Our Products
       </h1>
 
-      {/* Category Filter */}
       <div className="flex justify-center mb-8">
         <CategoryFilter
           categories={categories}
@@ -66,7 +72,6 @@ export default function ProductsPage() {
         />
       </div>
 
-      {/* Products Grid */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <span className="loading loading-spinner text-primary"></span>
@@ -82,34 +87,6 @@ export default function ProductsPage() {
           ))}
         </div>
       )}
-
-      {/* SEO Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            itemListElement: products.map((product, index) => ({
-              "@type": "ListItem",
-              position: index + 1,
-              item: {
-                "@type": "Product",
-                name: product.name,
-                url: `https://chipper-store.com/products/${product.id}`,
-                image: product.imageUrl,
-                description: product.description,
-                offers: {
-                  "@type": "Offer",
-                  priceCurrency: "USD",
-                  price: product.price,
-                  availability: "https://schema.org/InStock",
-                },
-              },
-            })),
-          }),
-        }}
-      />
     </div>
   );
 }

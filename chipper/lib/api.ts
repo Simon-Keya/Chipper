@@ -1,8 +1,8 @@
 // src/utils/api.ts
 import { Category, Order, Product } from "./types";
 
-// Use environment variable for deployment flexibility
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
 export interface ProductPayload {
   name: string;
@@ -10,12 +10,18 @@ export interface ProductPayload {
   stock: number;
   categoryId: number;
   description: string;
-  image?: string; // Cloudinary URL
+  image?: string;
+}
+
+// ✅ Utility: prevents fetching during build-time (on server)
+function isServer() {
+  return typeof window === "undefined";
 }
 
 // -------------------- PRODUCTS --------------------
 
 export async function fetchProducts(categoryId?: string): Promise<Product[]> {
+  if (isServer()) return []; // ✅ Skip server builds safely
   try {
     const url = categoryId
       ? `${API_BASE_URL}/api/products?categoryId=${categoryId}`
@@ -30,6 +36,7 @@ export async function fetchProducts(categoryId?: string): Promise<Product[]> {
 }
 
 export async function fetchProduct(id: string): Promise<Product> {
+  if (isServer()) throw new Error("fetchProduct called on server.");
   const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
     cache: "no-store",
   });
@@ -41,6 +48,7 @@ export async function createProduct(
   product: ProductPayload | FormData,
   token: string
 ): Promise<Product> {
+  if (isServer()) throw new Error("createProduct called on server.");
   const isFormData = product instanceof FormData;
 
   const res = await fetch(`${API_BASE_URL}/api/products`, {
@@ -61,6 +69,7 @@ export async function updateProduct(
   product: ProductPayload | FormData,
   token: string
 ): Promise<Product> {
+  if (isServer()) throw new Error("updateProduct called on server.");
   const isFormData = product instanceof FormData;
 
   const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
@@ -77,6 +86,7 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: number, token: string): Promise<void> {
+  if (isServer()) throw new Error("deleteProduct called on server.");
   const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
@@ -86,14 +96,8 @@ export async function deleteProduct(id: number, token: string): Promise<void> {
 
 // -------------------- CLOUDINARY UPLOAD --------------------
 
-/**
- * Optional: Upload image directly from frontend to backend Cloudinary route.
- * Backend should handle cloudinary.uploader.upload internally.
- */
-export async function uploadImage(
-  file: File,
-  token: string
-): Promise<string> {
+export async function uploadImage(file: File, token: string): Promise<string> {
+  if (isServer()) throw new Error("uploadImage called on server.");
   const formData = new FormData();
   formData.append("image", file);
 
@@ -106,12 +110,13 @@ export async function uploadImage(
   if (!res.ok) throw new Error(`Failed to upload image: ${res.statusText}`);
 
   const data = await res.json();
-  return data.url; // assuming backend returns { url: "https://..." }
+  return data.url;
 }
 
 // -------------------- CATEGORIES --------------------
 
 export async function fetchCategories(): Promise<Category[]> {
+  if (isServer()) return []; // ✅ Skip during prerender/build
   try {
     const res = await fetch(`${API_BASE_URL}/api/categories`, {
       cache: "force-cache",
@@ -128,6 +133,7 @@ export async function createCategory(
   name: string,
   token: string
 ): Promise<Category> {
+  if (isServer()) throw new Error("createCategory called on server.");
   const res = await fetch(`${API_BASE_URL}/api/categories`, {
     method: "POST",
     headers: {
@@ -145,6 +151,7 @@ export async function updateCategory(
   name: string,
   token: string
 ): Promise<Category> {
+  if (isServer()) throw new Error("updateCategory called on server.");
   const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
     method: "PUT",
     headers: {
@@ -158,6 +165,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: number, token: string): Promise<void> {
+  if (isServer()) throw new Error("deleteCategory called on server.");
   const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
@@ -168,6 +176,7 @@ export async function deleteCategory(id: number, token: string): Promise<void> {
 // -------------------- ORDERS --------------------
 
 export async function fetchOrders(token: string): Promise<Order[]> {
+  if (isServer()) return [];
   try {
     const res = await fetch(`${API_BASE_URL}/api/orders`, {
       headers: { Authorization: `Bearer ${token}` },
