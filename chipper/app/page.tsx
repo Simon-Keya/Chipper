@@ -25,7 +25,7 @@ export default async function Home() {
     fetchCategories(),
   ]);
 
-  const displayProducts = products.slice(0, 8);
+  const displayProducts = products.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-hidden">
@@ -270,7 +270,7 @@ export default async function Home() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300 inline-block">
-                        KSH {product.price.toLocaleString()}
+                        Ksh. {product.price.toLocaleString()}
                       </div>
                       {product.stock <= 5 && product.stock > 0 && (
                         <div className="text-xs text-orange-600 font-medium mt-1 animate-pulse">
