@@ -2,7 +2,7 @@
 import { Category, Order, Product } from "./types";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+  process.env.NEXT_PUBLIC_API_URL || "https://chipper-server.onrender.com";
 
 export interface ProductPayload {
   name: string;
