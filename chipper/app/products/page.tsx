@@ -26,7 +26,7 @@ export default function ProductsPage() {
       setError(null);
       try {
         // Use environment variable for API base URL to avoid build-time issues
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiBase = process.env.NEXT_PUBLIC_API_URL;
         const [fetchedProducts, fetchedCategories] = await Promise.all([
           fetchProducts(categoryId?.toString()),
           fetchCategories(),
