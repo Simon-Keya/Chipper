@@ -1,12 +1,10 @@
-// app/page.tsx - Enhanced homepage with CSS animations and visual effects
-
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { fetchCategories, fetchProducts } from '../lib/api';
 import { Category, Product } from '../lib/types';
 
-export const metadata: Metadata = {
+export const metsadata: Metadata = {
   title: 'Chipper - Your One-Stop Shop for Quality Products',
   description: 'Explore a wide range of premium products at Chipper - from cutting-edge electronics to stylish fashion. Shop with confidence and enjoy fast delivery across Kenya.',
   keywords: 'ecommerce, online shopping, electronics, fashion, home goods, Kenya, Chipper, quality products',
