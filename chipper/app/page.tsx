@@ -1,20 +1,18 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import CategoryFilter from '@/components/CategoryFilter';
+import ProductCard from '@/components/ProductCard';
+import { fetchCategories, fetchProducts } from '@/lib/api';
+import { Category, Product } from '@/lib/types';
 import { useEffect, useState } from 'react';
-import CategoryFilter from '../components/CategoryFilter';
-import ProductCard from '../components/ProductCard';
-import { fetchCategories, fetchProducts } from '../lib/api';
-import { Category, Product } from '../lib/types';
 
-export default function HomePage() {
+export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch data on the client
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -29,8 +27,7 @@ export default function HomePage() {
         setProducts(fetchedProducts || []);
         setCategories(fetchedCategories || []);
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load products.');
+        setError('Failed to load products. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -43,70 +40,39 @@ export default function HomePage() {
     setSelectedCategory(newCategoryId);
   };
 
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen space-y-4">
+        <p className="text-red-500">{error}</p>
+        <button className="btn btn-primary" onClick={() => setSelectedCategory(null)}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-base-100 min-h-screen">
-      {/* HERO SECTION */}
-      <section className="relative bg-gradient-to-r from-primary to-secondary text-white py-20 px-6 text-center">
-        <motion.h1
-          className="text-5xl font-extrabold mb-4"
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          Welcome to Our Store
-        </motion.h1>
+    <div className="min-h-screen bg-base-100 py-10 px-4">
+      {/* ---------------- HERO / OFFER SECTION ---------------- */}
+      <div className="max-w-5xl mx-auto text-center mb-12">
+        <h1 className="text-4xl font-extrabold text-primary mb-4 animate-fadeIn">
+          Discover the Best Deals
+        </h1>
+        <p className="text-lg text-neutral animate-fadeIn delay-150">
+          Explore our curated selection of top-quality gadgets at unbeatable prices.
+        </p>
 
-        <motion.p
-          className="text-lg opacity-90 max-w-2xl mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          Discover amazing deals on the latest gadgets, accessories, and more.
-        </motion.p>
+        {/* OFFER CARD */}
+        <div className="mt-8 p-6 bg-gradient-to-r from-primary/20 to-primary/5 rounded-2xl shadow-lg animate-fadeInUp">
+          <h2 className="text-2xl font-bold text-primary">🔥 Weekly Special Offer</h2>
+          <p className="text-neutral mt-2">
+            Get amazing discounts on select accessories. Limited time only!
+          </p>
+        </div>
+      </div>
 
-        <motion.button
-          className="btn btn-accent mt-6"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          Shop Now
-        </motion.button>
-      </section>
-
-      {/* OFFERS SECTION */}
-      <section className="container mx-auto px-6 py-12">
-        <h2 className="text-3xl font-bold mb-6 text-center">Special Offers</h2>
-
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            visible: { transition: { staggerChildren: 0.2 } },
-          }}
-        >
-          {[
-            { title: "Flash Sale", desc: "Up to 50% OFF today only!" },
-            { title: "New Arrivals", desc: "Fresh products just landed." },
-            { title: "Best Sellers", desc: "Top-rated items loved by customers." },
-          ].map((offer, i) => (
-            <motion.div
-              key={i}
-              className="card bg-primary text-white shadow-xl p-6"
-              variants={{
-                hidden: { opacity: 0, y: 40 },
-                visible: { opacity: 1, y: 0 },
-              }}
-            >
-              <h3 className="text-xl font-bold mb-2">{offer.title}</h3>
-              <p>{offer.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
-      {/* CATEGORY FILTER */}
-      <div className="flex justify-center mt-10 mb-6">
+      {/* ---------------- CATEGORY FILTER ---------------- */}
+      <div className="flex justify-center mb-10 animate-fadeInUp delay-200">
         <CategoryFilter
           categories={categories}
           selectedCategory={selectedCategory}
@@ -114,53 +80,30 @@ export default function HomePage() {
         />
       </div>
 
-      {/* PRODUCTS SECTION */}
-      <section className="container mx-auto px-6 pb-16">
-        <h2 className="text-3xl font-bold mb-8 text-center">
-          {selectedCategory ? "Filtered Products" : "Featured Products"}
-        </h2>
-
+      {/* ---------------- PRODUCTS GRID ---------------- */}
+      <div className="max-w-7xl mx-auto">
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <span className="loading loading-spinner loading-lg text-primary"></span>
+            <span className="loading loading-spinner text-primary"></span>
           </div>
-        ) : error ? (
-          <div className="text-center text-red-500">{error}</div>
         ) : products.length === 0 ? (
-          <div className="text-center">
-            <p className="text-neutral-content text-lg">
-              No products available for this category.
-            </p>
+          <div className="text-center py-20">
+            <p className="text-neutral mb-4">No products found in this category.</p>
             <button
+              className="btn btn-outline btn-primary"
               onClick={() => handleCategoryChange(null)}
-              className="btn btn-outline btn-primary mt-4"
             >
-              Show All Products
+              Show All
             </button>
           </div>
         ) : (
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              visible: { transition: { staggerChildren: 0.1 } },
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 animate-fadeInUp">
             {products.map((product) => (
-              <motion.div
-                key={product.id}
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
+              <ProductCard key={product.id} product={product} />
             ))}
-          </motion.div>
+          </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }
