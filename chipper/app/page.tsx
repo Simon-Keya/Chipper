@@ -1,5 +1,6 @@
 'use client';
 import { Clock, Leaf, Search, Shield, Star, Truck } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import ProductCard from '../components/ProductCard';
@@ -98,10 +99,12 @@ export default function HomePage() {
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="aspect-square relative">
-                <img 
-                  src={`/categories/${category.id}.jpg`} 
-                  alt={category.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                <Image
+                  src={`/categories/${category.id}.jpg`}
+                  alt={category.name}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 25vw, 20vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 right-4">

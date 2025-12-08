@@ -8,7 +8,7 @@ import { fetchCategories, fetchProducts } from '../../lib/api';
 import { Category, Product } from '../../lib/types';
 
 export default function ProductsPage() {
-  // ORIGINAL FETCHING LOGIC FROM FIRST CODE
+  
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
