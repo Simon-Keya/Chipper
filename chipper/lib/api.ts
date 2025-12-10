@@ -1,27 +1,16 @@
-// src/utils/api.ts
-import { Category, Order, Product } from "./types";
+import { CartItem, CartResponse, Category, Order, Product, ProductPayload, Review, ReviewPayload } from "./types";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://chipper-server.onrender.com";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export interface ProductPayload {
-  name: string;
-  price: number;
-  stock: number;
-  categoryId: number;
-  description: string;
-  image?: string;
-}
-
-// ✅ Utility: prevents fetching during build-time (on server)
+// Utility: prevents fetching during build-time (on server)
 function isServer() {
-  return typeof window === "undefined";
+  return typeof window === 'undefined';
 }
 
 // -------------------- PRODUCTS --------------------
 
 export async function fetchProducts(categoryId?: string): Promise<Product[]> {
-  if (isServer()) return []; // ✅ Skip server builds safely
+  if (isServer()) return []; // Skip server builds safely
   try {
     const url = categoryId
       ? `${API_BASE_URL}/api/products?categoryId=${categoryId}`
@@ -116,7 +105,7 @@ export async function uploadImage(file: File, token: string): Promise<string> {
 // -------------------- CATEGORIES --------------------
 
 export async function fetchCategories(): Promise<Category[]> {
-  if (isServer()) return []; // ✅ Skip during prerender/build
+  if (isServer()) return []; // Skip during prerender/build
   try {
     const res = await fetch(`${API_BASE_URL}/api/categories`, {
       cache: "force-cache",
@@ -188,4 +177,88 @@ export async function fetchOrders(token: string): Promise<Order[]> {
     console.error("Error fetching orders:", error);
     return [];
   }
+}
+
+// -------------------- CART --------------------
+
+export async function fetchCart(token: string): Promise<CartResponse> {
+  if (isServer()) throw new Error("fetchCart called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/cart`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to fetch cart: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function updateCartItem(id: number, quantity: number, token: string): Promise<CartItem> {
+  if (isServer()) throw new Error("updateCartItem called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/cart/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ quantity }),
+  });
+  if (!res.ok) throw new Error(`Failed to update cart item: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function removeFromCart(id: number, token: string): Promise<void> {
+  if (isServer()) throw new Error("removeFromCart called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/cart/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Failed to remove from cart: ${res.statusText}`);
+}
+
+export async function addToCart(productId: number, quantity: number = 1, token: string): Promise<CartItem> {
+  if (isServer()) throw new Error("addToCart called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/cart`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ productId, quantity }),
+  });
+  if (!res.ok) throw new Error(`Failed to add to cart: ${res.statusText}`);
+  return await res.json();
+}
+
+// -------------------- REVIEWS --------------------
+
+export async function fetchReviews(productId: number, token?: string): Promise<Review[]> {
+  if (isServer()) return [];
+  try {
+    const headers: HeadersInit = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch(`${API_BASE_URL}/api/reviews/${productId}`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch reviews: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return [];
+  }
+}
+
+export async function addReview(productId: number, reviewData: ReviewPayload, token: string): Promise<Review> {
+  if (isServer()) throw new Error("addReview called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/reviews/${productId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(reviewData),
+  });
+  if (!res.ok) throw new Error(`Failed to add review: ${res.statusText}`);
+  return await res.json();
 }
