@@ -23,6 +23,16 @@ export interface Order {
   productId: number;
   customerDetails: string;
   status: string;
+  total: number;
+  items: CartItem[];
+  shippingAddress: {
+    line1: string;
+    city: string;
+    postalCode?: string;
+    country?: string;
+  };
+  paymentStatus: string;
+  paymentMethod: string;
   createdAt: string;
   product: Product;
 }
@@ -55,6 +65,7 @@ export interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+  helpfulCount?: number;
   user: {
     id: number;
     name: string;

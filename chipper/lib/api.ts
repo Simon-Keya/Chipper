@@ -179,6 +179,65 @@ export async function fetchOrders(token: string): Promise<Order[]> {
   }
 }
 
+export async function fetchOrder(id: string, token: string): Promise<Order> {
+  if (isServer()) throw new Error("fetchOrder called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to fetch order: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function updateOrderStatus(
+  id: number,
+  status: string,
+  token: string
+): Promise<Order> {
+  if (isServer()) throw new Error("updateOrderStatus called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/orders/${id}/status`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw new Error(`Failed to update order status: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function deleteOrder(id: number, token: string): Promise<void> {
+  if (isServer()) throw new Error("deleteOrder called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Failed to delete order: ${res.statusText}`);
+}
+
+export async function createOrder(
+  orderData: {
+    productId: number;
+    quantity: number;
+    customerDetails?: string;
+    status?: string;
+  },
+  token: string
+): Promise<Order> {
+  if (isServer()) throw new Error("createOrder called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/orders`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(orderData),
+  });
+  if (!res.ok) throw new Error(`Failed to create order: ${res.statusText}`);
+  return await res.json();
+}
+
 // -------------------- CART --------------------
 
 export async function fetchCart(token: string): Promise<CartResponse> {
@@ -228,6 +287,15 @@ export async function addToCart(productId: number, quantity: number = 1, token: 
   return await res.json();
 }
 
+export async function clearCart(token: string): Promise<void> {
+  if (isServer()) throw new Error("clearCart called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/cart/clear`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Failed to clear cart: ${res.statusText}`);
+}
+
 // -------------------- REVIEWS --------------------
 
 export async function fetchReviews(productId: number, token?: string): Promise<Review[]> {
@@ -261,4 +329,13 @@ export async function addReview(productId: number, reviewData: ReviewPayload, to
   });
   if (!res.ok) throw new Error(`Failed to add review: ${res.statusText}`);
   return await res.json();
+}
+
+export async function deleteReview(reviewId: number, token: string): Promise<void> {
+  if (isServer()) throw new Error("deleteReview called on server.");
+  const res = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Failed to delete review: ${res.statusText}`);
 }

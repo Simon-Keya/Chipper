@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Elements, useElements, useStripe } from '@stripe/react-stripe-js';
+import { CardElement, Elements, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { AlertCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -37,7 +37,7 @@ const PaymentFormInner = ({ amount, onSuccess }: PaymentFormProps) => {
 
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
-          card: elements.getElement(Card)!,
+          card: elements.getElement(CardElement)!,
           billing_details: {
             name: 'Customer Name', // From form
           },
@@ -50,6 +50,7 @@ const PaymentFormInner = ({ amount, onSuccess }: PaymentFormProps) => {
         onSuccess();
       }
     } catch (err) {
+      console.error('Payment error:', err);
       setError('Payment processing failed');
     } finally {
       setLoading(false);

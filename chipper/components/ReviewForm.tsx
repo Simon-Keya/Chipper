@@ -1,6 +1,6 @@
 'use client';
 
-import { useReviews } from '@/hooks/useReviews';
+import { useReviews } from '@/hooks/UseReviews';
 import { Star } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,7 +13,7 @@ export default function ReviewForm({ productId, onReviewAdded }: ReviewFormProps
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { addReview } = useReviews();
+  const { submitReview } = useReviews(productId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +21,7 @@ export default function ReviewForm({ productId, onReviewAdded }: ReviewFormProps
 
     setSubmitting(true);
     try {
-      await addReview(productId, { rating, comment });
+      await submitReview({ rating, comment });
       setComment('');
       setRating(5);
       if (onReviewAdded) onReviewAdded();

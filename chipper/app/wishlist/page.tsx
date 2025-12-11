@@ -1,6 +1,7 @@
 'use client';
 
 import { Heart, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import ProductCard from '../../components/ProductCard';
 import { Product } from '../../lib/types';
@@ -11,13 +12,33 @@ export default function WishlistPage() {
       id: 1,
       name: 'Wireless Headphones',
       price: 4999,
+      image: '/products/headphones.jpg',
       imageUrl: '/products/headphones.jpg',
+      stock: 50,
+      categoryId: 1,
+      category: {
+        id: 1,
+        name: 'Electronics',
+        createdAt: new Date().toISOString(),
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: 2,
       name: 'Smart Watch',
       price: 12999,
+      image: '/products/watch.jpg',
       imageUrl: '/products/watch.jpg',
+      stock: 30,
+      categoryId: 2,
+      category: {
+        id: 2,
+        name: 'Wearables',
+        createdAt: new Date().toISOString(),
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
   ]);
 
@@ -33,9 +54,9 @@ export default function WishlistPage() {
           <Heart className="w-24 h-24 text-base-content/40 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-base-content mb-4">Your Wishlist is Empty</h2>
           <p className="text-base-content/60 mb-8">Save items you love for later.</p>
-          <a href="/products" className="btn btn-primary">
+          <Link href="/products" className="btn btn-primary">
             Start Shopping
-          </a>
+          </Link>
         </div>
       </div>
     );

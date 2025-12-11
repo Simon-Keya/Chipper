@@ -133,11 +133,6 @@ export default function CartPage() {
     }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    localStorage.removeItem(CART_KEY);
-  };
-
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center py-12">

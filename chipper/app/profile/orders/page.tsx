@@ -1,60 +1,33 @@
 'use client';
 
+import { fetchOrders } from '@/lib/api';
+import { Order } from '@/lib/types';
 import { ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-interface Order {
-  id: number;
-  orderNumber: string;
-  date: string;
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  total: number;
-  items: number;
-}
-
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: 1,
-      orderNumber: '#ORD-001',
-      date: 'Dec 1, 2024',
-      status: 'Delivered',
-      total: 25000,
-      items: 3,
-    },
-    {
-      id: 2,
-      orderNumber: '#ORD-002',
-      date: 'Nov 28, 2024',
-      status: 'Shipped',
-      total: 15000,
-      items: 1,
-    },
-    {
-      id: 3,
-      orderNumber: '#ORD-003',
-      date: 'Nov 25, 2024',
-      status: 'Processing',
-      total: 45000,
-      items: 5,
-    },
-  ]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch orders from API
-    // const fetchOrders = async () => {
-    //   const token = localStorage.getItem('token');
-    //   const response = await fetch('/api/orders', {
-    //     headers: { Authorization: `Bearer ${token}` },
-    //   });
-    //   const data = await response.json();
-    //   setOrders(data);
-    //   setLoading(false);
-    // };
-    // fetchOrders();
-    setTimeout(() => setLoading(false), 1000); // Simulate loading
+    const loadOrders = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        const data = await fetchOrders(token);
+        setOrders(data);
+      } catch (err) {
+        console.error('Failed to fetch orders:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
   }, []);
 
   if (loading) {
@@ -88,15 +61,15 @@ export default function OrdersPage() {
               <div className="card-body p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-semibold text-base-content">{order.orderNumber}</h3>
-                    <p className="text-sm text-base-content/60">{order.date}</p>
+                    <h3 className="font-semibold text-base-content">#{order.id}</h3>
+                    <p className="text-sm text-base-content/60">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className={`badge badge-lg ${order.status === 'Delivered' ? 'badge-success' : order.status === 'Shipped' ? 'badge-info' : order.status === 'Processing' ? 'badge-warning' : 'badge-error'}`}>
                     {order.status}
                   </div>
                 </div>
                 <div className="flex justify-between items-center text-sm text-base-content/70 mb-3">
-                  <span>{order.items} items</span>
+                  <span>1 item</span>
                   <span>KSh {order.total.toLocaleString()}</span>
                 </div>
                 <div className="flex gap-2">
