@@ -102,12 +102,12 @@ export async function uploadImage(file: File, token: string): Promise<string> {
   return data.url;
 }
 
-// -------------------- CATEGORIES --------------------
+// -------------------- CATEGORIES (WITH IMAGE SUPPORT) --------------------
 
 export async function fetchCategories(): Promise<Category[]> {
-  if (isServer()) return []; // Skip during prerender/build
+  if (isServer()) return [];
   try {
-    const res = await fetch(`${API_BASE_URL}/api/categories`, {
+    const res = await fetch(`${API_BASE_URL}/categories`, {
       cache: "force-cache",
     });
     if (!res.ok) throw new Error(`Failed to fetch categories: ${res.statusText}`);
@@ -119,43 +119,54 @@ export async function fetchCategories(): Promise<Category[]> {
 }
 
 export async function createCategory(
-  name: string,
+  data: FormData,
   token: string
 ): Promise<Category> {
   if (isServer()) throw new Error("createCategory called on server.");
-  const res = await fetch(`${API_BASE_URL}/api/categories`, {
+
+  const res = await fetch(`${API_BASE_URL}/categories`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      // Let browser set Content-Type with boundary
     },
-    body: JSON.stringify({ name }),
+    body: data,
   });
-  if (!res.ok) throw new Error(`Failed to create category: ${res.statusText}`);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(err.error || "Failed to create category");
+  }
+
   return await res.json();
 }
 
 export async function updateCategory(
   id: number,
-  name: string,
+  data: FormData,
   token: string
 ): Promise<Category> {
   if (isServer()) throw new Error("updateCategory called on server.");
-  const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+
+  const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ name }),
+    body: data,
   });
-  if (!res.ok) throw new Error(`Failed to update category: ${res.statusText}`);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(err.error || "Failed to update category");
+  }
+
   return await res.json();
 }
 
 export async function deleteCategory(id: number, token: string): Promise<void> {
   if (isServer()) throw new Error("deleteCategory called on server.");
-  const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
