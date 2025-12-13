@@ -1,13 +1,67 @@
 "use client";
 
-import { HelpCircle, Home, Menu, Package, Search, ShoppingBag, X } from "lucide-react";
+import { HelpCircle, Home, LogIn, LogOut, Menu, Package, Search, ShoppingBag, ShoppingCart, User, UserPlus, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [userName, setUserName] = useState("");
+  const router = useRouter();
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const storedName = localStorage.getItem('userName');
+      
+      if (token) {
+        setIsLoggedIn(true);
+        setUserName(storedName || 'User');
+        loadCartCount();
+      }
+    };
+
+    checkAuth();
+    
+    // Listen for auth changes
+    window.addEventListener('storage', checkAuth);
+    window.addEventListener('auth-change', checkAuth);
+    
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('auth-change', checkAuth);
+    };
+  }, []);
+
+  // Load cart count
+  const loadCartCount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // Replace with your actual cart API endpoint
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Assuming cart response has items array
+        setCartCount(data.items?.length || 0);
+      }
+    } catch (error) {
+      console.error('Failed to load cart:', error);
+    }
+  };
 
   // Handle scroll effect
   useEffect(() => {
@@ -21,10 +75,23 @@ const Header = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) {
-      console.log("Searching for:", search);
-      // Replace with actual search logic or navigation
-      window.location.href = `/products?search=${encodeURIComponent(search)}`;
+      router.push(`/products?search=${encodeURIComponent(search)}`);
+      setSearch("");
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    setIsLoggedIn(false);
+    setUserName("");
+    setCartCount(0);
+    setShowUserMenu(false);
+    
+    // Dispatch custom event for other components
+    window.dispatchEvent(new Event('auth-change'));
+    
+    router.push('/');
   };
 
   const closeMenu = () => setIsMenuOpen(false);
@@ -121,8 +188,8 @@ const Header = () => {
             </form>
           </div>
 
-          {/* Right Section: Help Button */}
-          <div className="flex items-center gap-3">
+          {/* Right Section: Cart, User, Help */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Mobile Search Icon */}
             <button
               onClick={() => {
@@ -135,14 +202,112 @@ const Header = () => {
               <Search className="w-5 h-5 text-gray-600" />
             </button>
 
+            {/* Cart Button */}
+            <Link
+              href="/cart"
+              className="relative p-2 rounded-lg hover:bg-emerald-50 transition-colors group"
+              aria-label="Shopping cart"
+            >
+              <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700 group-hover:text-emerald-600 transition-colors" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce-in">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Link>
+
+            {/* User Menu / Auth Buttons */}
+            {isLoggedIn ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="User menu"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="hidden lg:block text-sm font-medium text-gray-700">
+                    {userName}
+                  </span>
+                </button>
+
+                {/* User Dropdown */}
+                {showUserMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowUserMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20 animate-scale-in">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-900">{userName}</p>
+                        <p className="text-xs text-gray-500 mt-1">Manage your account</p>
+                      </div>
+                      <Link
+                        href="/profile"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        My Profile
+                      </Link>
+                      <Link
+                        href="/orders"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                      >
+                        <Package className="w-4 h-4" />
+                        My Orders
+                      </Link>
+                      <Link
+                        href="/cart"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        My Cart
+                      </Link>
+                      <div className="border-t border-gray-100 mt-2 pt-2">
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-2">
+                <Link
+                  href="/auth/login"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 transition-colors flex items-center gap-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Sign Up
+                </Link>
+              </div>
+            )}
+
             {/* Help Button */}
             <Link
               href="/help"
-              className="group relative px-4 lg:px-6 py-2 lg:py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 overflow-hidden"
+              className="group relative px-3 lg:px-4 py-2 lg:py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 overflow-hidden"
             >
               <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></span>
               <HelpCircle className="w-4 h-4 lg:w-5 lg:h-5 group-hover:rotate-12 transition-transform" />
-              <span className="hidden sm:inline relative">Help</span>
+              <span className="hidden lg:inline relative">Help</span>
             </Link>
           </div>
         </div>
@@ -183,7 +348,7 @@ const Header = () => {
           />
 
           {/* Menu Panel */}
-          <div className="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 lg:hidden transform transition-transform duration-300 animate-slide-in">
+          <div className="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 lg:hidden transform transition-transform duration-300 animate-slide-in overflow-y-auto">
             <div className="p-6">
               {/* Menu Header */}
               <div className="flex items-center justify-between mb-8">
@@ -204,6 +369,40 @@ const Header = () => {
                   <X className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
+
+              {/* User Section */}
+              {isLoggedIn ? (
+                <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{userName}</p>
+                      <p className="text-xs text-gray-600">Welcome back!</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-6 space-y-2">
+                  <Link
+                    href="/auth/login"
+                    onClick={closeMenu}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition-colors"
+                  >
+                    <LogIn className="w-5 h-5" />
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    onClick={closeMenu}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 rounded-xl font-semibold transition-colors"
+                  >
+                    <UserPlus className="w-5 h-5" />
+                    Sign Up
+                  </Link>
+                </div>
+              )}
 
               {/* Menu Items */}
               <nav className="space-y-2">
@@ -235,6 +434,43 @@ const Header = () => {
                   </div>
                 </Link>
 
+                {isLoggedIn && (
+                  <>
+                    <Link
+                      href="/cart"
+                      onClick={closeMenu}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200 group relative"
+                    >
+                      <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center group-hover:bg-purple-100 transition-colors relative">
+                        <ShoppingCart className="w-5 h-5 text-purple-600" />
+                        {cartCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                            {cartCount}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-semibold">My Cart</div>
+                        <div className="text-xs text-gray-500">{cartCount} items</div>
+                      </div>
+                    </Link>
+
+                    <Link
+                      href="/orders"
+                      onClick={closeMenu}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200 group"
+                    >
+                      <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                        <Package className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <div className="font-semibold">My Orders</div>
+                        <div className="text-xs text-gray-500">Track orders</div>
+                      </div>
+                    </Link>
+                  </>
+                )}
+
                 <Link
                   href="/help"
                   onClick={closeMenu}
@@ -248,6 +484,24 @@ const Header = () => {
                     <div className="text-xs text-gray-500">Get assistance</div>
                   </div>
                 </Link>
+
+                {isLoggedIn && (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      closeMenu();
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 group w-full"
+                  >
+                    <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                      <LogOut className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">Logout</div>
+                      <div className="text-xs text-red-500">Sign out</div>
+                    </div>
+                  </button>
+                )}
               </nav>
 
               {/* Menu Footer */}
@@ -283,4 +537,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Header

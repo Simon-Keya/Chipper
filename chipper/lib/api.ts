@@ -1,6 +1,9 @@
+// lib/api.ts
+
 import { CartItem, CartResponse, Category, Order, Product, ProductPayload, Review, ReviewPayload } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Critical fix: Remove /api from base URL — it's already mounted in server.ts
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Utility: prevents fetching during build-time (on server)
 function isServer() {
@@ -10,7 +13,7 @@ function isServer() {
 // -------------------- PRODUCTS --------------------
 
 export async function fetchProducts(categoryId?: string): Promise<Product[]> {
-  if (isServer()) return []; // Skip server builds safely
+  if (isServer()) return [];
   try {
     const url = categoryId
       ? `${API_BASE_URL}/api/products?categoryId=${categoryId}`
@@ -102,12 +105,12 @@ export async function uploadImage(file: File, token: string): Promise<string> {
   return data.url;
 }
 
-// -------------------- CATEGORIES (WITH IMAGE SUPPORT) --------------------
+// -------------------- CATEGORIES --------------------
 
 export async function fetchCategories(): Promise<Category[]> {
   if (isServer()) return [];
   try {
-    const res = await fetch(`${API_BASE_URL}/categories`, {
+    const res = await fetch(`${API_BASE_URL}/api/categories`, {  // ← Fixed: /api/categories
       cache: "force-cache",
     });
     if (!res.ok) throw new Error(`Failed to fetch categories: ${res.statusText}`);
@@ -124,11 +127,10 @@ export async function createCategory(
 ): Promise<Category> {
   if (isServer()) throw new Error("createCategory called on server.");
 
-  const res = await fetch(`${API_BASE_URL}/categories`, {
+  const res = await fetch(`${API_BASE_URL}/api/categories`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      // Let browser set Content-Type with boundary
     },
     body: data,
   });
@@ -148,7 +150,7 @@ export async function updateCategory(
 ): Promise<Category> {
   if (isServer()) throw new Error("updateCategory called on server.");
 
-  const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -166,7 +168,7 @@ export async function updateCategory(
 
 export async function deleteCategory(id: number, token: string): Promise<void> {
   if (isServer()) throw new Error("deleteCategory called on server.");
-  const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
