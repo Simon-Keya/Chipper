@@ -1,17 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
-import { CheckCircle, Truck, Shield, Clock } from 'lucide-react';
+import { CheckCircle, Clock, Shield, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function SuccessPage() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get('orderNumber') || 'ORD-123456';
 
   useEffect(() => {
-    // Clear cart after successful order
-    // localStorage.removeItem('cart');
+    // Clear cart only on client side
+    if (typeof window !== 'undefined') {
+      // Use your cart key if you have one
+      localStorage.removeItem('chipper_cart');
+      // Or if you use a different key:
+      // localStorage.removeItem('cart');
+    }
   }, []);
 
   return (
