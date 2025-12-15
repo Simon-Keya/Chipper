@@ -6,7 +6,7 @@ import { CreditCard, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface CartItem {
   id: number;
@@ -18,39 +18,44 @@ interface CartItem {
 const CART_KEY = 'chipper_cart';
 
 const saveCartToStorage = (cartItems: CartItem[]) => {
-  localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+  }
 };
 
 const loadCartFromStorage = (): CartItem[] => {
+  if (typeof window === 'undefined') return [];
   const cart = localStorage.getItem(CART_KEY);
   return cart ? JSON.parse(cart) : [];
 };
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(loadCartFromStorage());
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    syncCart();
+    setMounted(true);
+    setCartItems(loadCartFromStorage());
   }, []);
 
-  const syncCart = async () => {
-    const token = localStorage.getItem('token');
+  const syncCart = useCallback(async () => {
+    if (!mounted) return;
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) return;
 
     setSyncLoading(true);
     try {
       const apiCart = await fetchCart(token);
-      // Merge with localStorage (prioritize API)
       const localCart = loadCartFromStorage();
       const mergedCart = [...apiCart.items];
       
       localCart.forEach(localItem => {
         const apiIndex = mergedCart.findIndex(item => item.product.id === localItem.product.id);
         if (apiIndex >= 0) {
-          // Update quantity if local has newer changes
           mergedCart[apiIndex].quantity = Math.max(mergedCart[apiIndex].quantity, localItem.quantity);
         } else {
           mergedCart.push(localItem);
@@ -64,16 +69,25 @@ export default function CartPage() {
     } finally {
       setSyncLoading(false);
     }
-  };
+  }, [mounted]); // Dependencies: only mounted
+
+  // Run syncCart after mount
+  useEffect(() => {
+    if (mounted) {
+      syncCart();
+    }
+  }, [mounted, syncCart]); // ← Now includes syncCart
 
   useEffect(() => {
-    saveCartToStorage(cartItems);
-  }, [cartItems]);
+    if (mounted) {
+      saveCartToStorage(cartItems);
+    }
+  }, [cartItems, mounted]);
 
   const updateQuantity = async (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    const token = localStorage.getItem('token');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
       try {
         await updateCartItem(itemId, newQuantity, token);
@@ -89,7 +103,7 @@ export default function CartPage() {
   };
 
   const removeItem = async (itemId: number) => {
-    const token = localStorage.getItem('token');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
       try {
         await removeFromCart(itemId, token);
@@ -110,21 +124,6 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        // Sync cart before checkout
-        await syncCart();
-        // Proceed to checkout API
-        // const response = await fetch('/api/checkout', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        //   body: JSON.stringify({ items: cartItems }),
-        // });
-        // if (response.ok) {
-        //   clearCart(); // Clear after successful checkout
-        //   router.push('/checkout');
-        // }
-      }
       router.push('/checkout');
     } catch (err) {
       console.error('Checkout failed', err);
@@ -132,6 +131,16 @@ export default function CartPage() {
       setLoading(false);
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center py-12">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -183,7 +192,7 @@ export default function CartPage() {
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
                     <Image
-                      src={item.product.imageUrl}
+                      src={item.product.imageUrl || '/placeholder.jpg'}
                       alt={item.product.name}
                       width={80}
                       height={80}
