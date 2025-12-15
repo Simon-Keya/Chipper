@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 export default function AdminRegister() {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(''); // ← Added email field
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,19 +28,26 @@ export default function AdminRegister() {
       return;
     }
 
+    if (!email) {
+      setError('Email is required');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, role: 'admin' }),
+        body: JSON.stringify({ username, email, password, role: 'admin' }), // ← Now includes email
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Registration failed');
+        throw new Error(data.error || data.message || 'Registration failed');
       }
 
-      setSuccess('Registration successful! Redirecting to login...');
+      setSuccess('Admin account created successfully! Redirecting to login...');
       setTimeout(() => router.push('/admin/login'), 2000);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -161,6 +169,41 @@ export default function AdminRegister() {
                 </div>
               </div>
 
+              {/* Email Field — Newly Added */}
+              <div className="form-control">
+                <label className="label" htmlFor="email">
+                  <span className="label-text font-medium text-gray-700">Email</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input input-bordered w-full pl-10 bg-gray-50 border-gray-300 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all"
+                    placeholder="admin@chipper.com"
+                    required
+                    disabled={loading}
+                    aria-label="Email"
+                  />
+                </div>
+              </div>
+
               {/* Password Field */}
               <div className="form-control">
                 <label className="label" htmlFor="password">
@@ -267,7 +310,7 @@ export default function AdminRegister() {
                         d="M12 4v16m8-8H4"
                       />
                     </svg>
-                    Register
+                    Register as Admin
                   </span>
                 )}
               </button>
@@ -309,4 +352,3 @@ export default function AdminRegister() {
     </div>
   );
 }
-
