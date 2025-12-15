@@ -1,51 +1,11 @@
 'use client';
 
-import { Heart, Trash2 } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
-import ProductCard from '../../components/ProductCard';
-import { Product } from '../../lib/types';
 
 export default function WishlistPage() {
-  const [wishlistItems] = useState<Product[]>([
-    {
-      id: 1,
-      name: 'Wireless Headphones',
-      price: 4999,
-      image: '/products/headphones.jpg',
-      imageUrl: '/products/headphones.jpg',
-      stock: 50,
-      categoryId: 1,
-      category: {
-        id: 1,
-        name: 'Electronics',
-        createdAt: new Date().toISOString(),
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      name: 'Smart Watch',
-      price: 12999,
-      image: '/products/watch.jpg',
-      imageUrl: '/products/watch.jpg',
-      stock: 30,
-      categoryId: 2,
-      category: {
-        id: 2,
-        name: 'Wearables',
-        createdAt: new Date().toISOString(),
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
-
-  const removeFromWishlist = (productId: number) => {
-    // Remove logic
-    console.log(`Removed ${productId} from wishlist`);
-  };
+  // Empty wishlist — no dummy products
+  const wishlistItems = [];
 
   if (wishlistItems.length === 0) {
     return (
@@ -62,6 +22,7 @@ export default function WishlistPage() {
     );
   }
 
+  // This part will only show when real items are added later
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
@@ -69,17 +30,7 @@ export default function WishlistPage() {
         <h1 className="text-2xl font-bold text-base-content">Wishlist ({wishlistItems.length})</h1>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {wishlistItems.map((product) => (
-          <div key={product.id} className="relative group">
-            <ProductCard product={product} />
-            <button
-              onClick={() => removeFromWishlist(product.id)}
-              className="absolute top-2 right-2 btn btn-ghost btn-xs btn-circle opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
+        {/* Real wishlist items will go here when implemented */}
       </div>
     </div>
   );
