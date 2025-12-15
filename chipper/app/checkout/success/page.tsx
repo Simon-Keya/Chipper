@@ -2,20 +2,13 @@
 
 import { CheckCircle, Clock, Shield, Truck } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function SuccessPage() {
-  const searchParams = useSearchParams();
-  const orderNumber = searchParams.get('orderNumber') || 'ORD-123456';
-
   useEffect(() => {
     // Clear cart only on client side
     if (typeof window !== 'undefined') {
-      // Use your cart key if you have one
       localStorage.removeItem('chipper_cart');
-      // Or if you use a different key:
-      // localStorage.removeItem('cart');
     }
   }, []);
 
@@ -35,7 +28,7 @@ export default function SuccessPage() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-base-content/70">Order Number:</span>
-              <span className="font-semibold">{orderNumber}</span>
+              <span className="font-semibold">ORD-{Date.now().toString().slice(-6)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-base-content/70">Estimated Delivery:</span>
