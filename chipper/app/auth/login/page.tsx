@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState(''); // ← Changed from email to username
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -28,7 +28,7 @@ export default function LoginPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }), // ← Send username, not email
+        body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
@@ -37,7 +37,6 @@ export default function LoginPage() {
           const errorData = await response.json();
           message = errorData.error || errorData.message || message;
         } catch {
-          // If no JSON body, use status text
           message = response.statusText || message;
         }
         throw new Error(message);
@@ -50,7 +49,8 @@ export default function LoginPage() {
         localStorage.setItem('rememberMe', 'true');
       }
       
-      router.push('/profile');
+      // Force full page reload to ensure auth context picks up the token
+      window.location.href = '/profile';
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
