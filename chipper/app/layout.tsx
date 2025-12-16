@@ -1,4 +1,4 @@
-// app/layout.tsx
+import { AuthProvider } from '@/hooks/useAuth';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Footer from '../components/Footer';
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Chipper',
     description: 'Discover quality products for all your needs.',
-    url: 'https://chipper-store.com',
+    url: 'https://chipper.vercel.app',
     images: ['/images/og-image.jpg'],
     siteName: 'Chipper',
   },
@@ -41,22 +41,24 @@ export default function RootLayout({
       <body
         className={`${inter.className} bg-base-100 text-base-content min-h-screen flex flex-col`}
       >
-        <Header />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <Header />
+          <main className="flex-grow">{children}</main>
+          <Footer />
 
-        {/* JSON-LD SEO structured data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: 'Chipper',
-              url: 'https://chipper-store.com',
-            }),
-          }}
-        />
+          {/* JSON-LD SEO structured data */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: 'Chipper',
+                url: 'https://chipper.vercel.app',
+              }),
+            }}
+          />
+        </AuthProvider>
       </body>
     </html>
   );
