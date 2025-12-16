@@ -2,7 +2,6 @@
 
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LoginPage() {
@@ -12,7 +11,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +23,12 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) {
+        throw new Error('API URL not configured');
+      }
+
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -43,15 +46,20 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
+      
+      console.log('Login successful! Token:', data.token);
+      
       localStorage.setItem('token', data.token);
       
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
       }
       
-      // Force full page reload to ensure auth context picks up the token
+      console.log('Redirecting to /profile...');
+      
       window.location.href = '/profile';
     } catch (err: unknown) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
