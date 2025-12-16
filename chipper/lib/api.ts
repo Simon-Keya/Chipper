@@ -9,7 +9,40 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 function isServer() {
   return typeof window === 'undefined';
 }
+// -------------------- AUTH --------------------
 
+export async function loginUser(username: string, password: string): Promise<{ token: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+
+  // Critical fix: Handle empty/invalid response body
+  if (!res.ok) {
+    let errorMessage = 'Login failed';
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch {
+      // If response is empty or not JSON, use status text
+      errorMessage = res.statusText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Also safely parse JSON
+  const text = await res.text();
+  if (!text) {
+    throw new Error('Empty response from server');
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error('Invalid response format');
+  }
+}
 // -------------------- PRODUCTS --------------------
 
 export async function fetchProducts(categoryId?: string): Promise<Product[]> {

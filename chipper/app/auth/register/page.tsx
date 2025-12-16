@@ -56,7 +56,7 @@ export default function RegisterPage() {
       }
 
       setSuccess('Account created successfully! Redirecting...');
-      setTimeout(() => router.push('/login'), 2000); // ← Better redirect to login
+      setTimeout(() => router.push('/auth/login'), 2000); // ← Better redirect to login
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
