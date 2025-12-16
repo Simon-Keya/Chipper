@@ -1,30 +1,48 @@
 'use client';
 
+import { useAuth } from '@/hooks/useAuth';
 import { Heart, Settings, ShoppingBag, User } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function ProfilePage() {
-  const [userData, setUserData] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    joined: 'January 2024',
-    orders: 12,
-    wishlist: 5,
-  });
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    // Fetch user data from API
-    // const fetchUserData = async () => {
-    //   const token = localStorage.getItem('token');
-    //   const response = await fetch('/api/auth/profile', {
-    //     headers: { Authorization: `Bearer ${token}` },
-    //   });
-    //   const data = await response.json();
-    //   setUserData(data);
-    // };
-    // fetchUserData();
-  }, []);
+    if (!loading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Redirecting...
+  }
+
+  const userData = {
+    name: user.username,
+    email: user.email || 'Not provided',
+    joined: 'January 2024', // You can fetch this later
+    orders: 12, // Mock data — replace with real API later
+    wishlist: 5,
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
 
   return (
     <div className="bg-base-100 rounded-xl shadow-sm p-6">
@@ -101,7 +119,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="mt-8 pt-6 border-t border-base-300">
-        <button className="btn btn-outline btn-error w-full">
+        <button onClick={handleLogout} className="btn btn-outline btn-error w-full">
           Logout
         </button>
       </div>
