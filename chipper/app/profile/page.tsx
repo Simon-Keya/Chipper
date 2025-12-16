@@ -10,15 +10,9 @@ export default function ProfilePage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
 
-  // Only redirect if we're sure there's no user after loading
   useEffect(() => {
     if (!loading && !user) {
-      // Small delay to allow token processing on fresh load
-      const timer = setTimeout(() => {
-        router.replace('/auth/login');
-      }, 200);
-
-      return () => clearTimeout(timer);
+      router.replace('/auth/login');
     }
   }, [user, loading, router]);
 
@@ -33,22 +27,8 @@ export default function ProfilePage() {
     );
   }
 
-  // If no user after loading, show a friendly message instead of blank
   if (!user) {
-    return (
-      <div className="min-h-screen bg-base-200 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <User className="w-16 h-16 text-base-content/40 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-base-content mb-4">Please Sign In</h2>
-          <p className="text-base-content/60 mb-8">
-            You need to be logged in to view your profile.
-          </p>
-          <Link href="/auth/login">
-            <button className="btn btn-primary">Go to Login</button>
-          </Link>
-        </div>
-      </div>
-    );
+    return null; // Redirecting...
   }
 
   const userData = {
