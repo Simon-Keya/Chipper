@@ -10,9 +10,15 @@ export default function ProfilePage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
 
+  // Only redirect if we're sure there's no user after loading
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/auth/login');
+      // Small delay to allow token processing on fresh load
+      const timer = setTimeout(() => {
+        router.replace('/auth/login');
+      }, 200);
+
+      return () => clearTimeout(timer);
     }
   }, [user, loading, router]);
 
@@ -21,21 +27,35 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="text-center">
           <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-4 text-base-content">Loading profile...</p>
+          <p className="mt-4 text-base-content">Loading your profile...</p>
         </div>
       </div>
     );
   }
 
+  // If no user after loading, show a friendly message instead of blank
   if (!user) {
-    return null; // Redirecting...
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <User className="w-16 h-16 text-base-content/40 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-base-content mb-4">Please Sign In</h2>
+          <p className="text-base-content/60 mb-8">
+            You need to be logged in to view your profile.
+          </p>
+          <Link href="/auth/login">
+            <button className="btn btn-primary">Go to Login</button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const userData = {
     name: user.username,
     email: user.email || 'Not provided',
-    joined: 'January 2024', // You can fetch this later
-    orders: 12, // Mock data — replace with real API later
+    joined: 'January 2024',
+    orders: 12,
     wishlist: 5,
   };
 
@@ -73,7 +93,7 @@ export default function ProfilePage() {
           <div className="text-2xl font-bold text-base-content">0</div>
           <p className="text-sm text-base-content/60">Reviews</p>
         </div>
-        <div className="text-center p-4 bg-base-200 rounded-xl col-span-1 md:col-span-1">
+        <div className="text-center p-4 bg-base-200 rounded-xl">
           <Settings className="w-8 h-8 text-info mx-auto mb-2" />
           <div className="text-2xl font-bold text-base-content">Edit</div>
           <p className="text-sm text-base-content/60">Profile</p>

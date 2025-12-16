@@ -1,21 +1,40 @@
+import { useAuth } from '@/hooks/useAuth';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export const metadata: Metadata = {
   title: 'Chipper - Profile',
   description: 'Manage your account, orders, and wishlist',
 };
 
-interface ProfileLayoutProps {
-  children: React.ReactNode;
-}
+export default function ProfileLayout({ children }: { children: React.ReactNode }) {
+  // Use client-side auth check only
+  'use client';
 
-export default function ProfileLayout({ children }: ProfileLayoutProps) {
-  // Simple auth check - replace with actual auth logic (e.g., NextAuth)
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  if (!token) {
-    redirect('/auth/login');
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content">Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Redirecting...
   }
 
   return (
@@ -27,10 +46,18 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
             <div className="bg-base-100 rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-4">My Account</h3>
               <nav className="space-y-2">
-                <Link href="/profile" className="link link-hover">Overview</Link>
-                <Link href="/profile/orders" className="link link-hover">Orders</Link>
-                <Link href="/wishlist" className="link link-hover">Wishlist</Link>
-                <Link href="/profile/settings" className="link link-hover">Settings</Link>
+                <Link href="/profile" className="block py-2 px-4 rounded-lg hover:bg-base-200 transition-colors font-medium">
+                  Overview
+                </Link>
+                <Link href="/profile/orders" className="block py-2 px-4 rounded-lg hover:bg-base-200 transition-colors">
+                  Orders
+                </Link>
+                <Link href="/wishlist" className="block py-2 px-4 rounded-lg hover:bg-base-200 transition-colors">
+                  Wishlist
+                </Link>
+                <Link href="/profile/settings" className="block py-2 px-4 rounded-lg hover:bg-base-200 transition-colors">
+                  Settings
+                </Link>
               </nav>
             </div>
           </aside>
