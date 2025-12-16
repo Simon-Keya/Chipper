@@ -1,12 +1,12 @@
 'use client';
 
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState(''); // ← Changed from email to username
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!username || !password) {
       setError('Please fill in all fields');
       return;
     }
@@ -25,24 +25,33 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }), // ← Send username, not email
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Invalid credentials');
+        let message = 'Invalid credentials';
+        try {
+          const errorData = await response.json();
+          message = errorData.error || errorData.message || message;
+        } catch {
+          // If no JSON body, use status text
+          message = response.statusText || message;
+        }
+        throw new Error(message);
       }
 
       const data = await response.json();
       localStorage.setItem('token', data.token);
+      
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
       }
+      
       router.push('/profile');
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
@@ -50,120 +59,122 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center p-4">
-      <div className="bg-base-100 rounded-2xl shadow-2xl p-8 max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-primary" />
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="w-8 h-8 text-emerald-600" />
           </div>
-          <h1 className="text-3xl font-bold text-base-content mb-2">Welcome Back</h1>
-          <p className="text-base-content/70">Sign in to your Chipper account</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <p className="text-gray-600">Sign in to your Chipper account</p>
         </div>
 
         {error && (
-          <div className="alert alert-error mb-6 shadow-lg">
-            <span>{error}</span>
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-semibold text-red-800">Login Failed</h3>
+              <p className="text-sm text-red-600 mt-1">{error}</p>
+            </div>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Username Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Email Address</span>
+              <span className="label-text font-medium text-gray-700">Username</span>
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-base-content/40" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input input-bordered w-full pl-10 pr-4 focus:input-primary transition-all"
+                type="text"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="input input-bordered w-full pl-11 pr-4 bg-gray-50 border-gray-300 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
                 required
+                disabled={loading}
               />
             </div>
           </div>
 
+          {/* Password Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Password</span>
+              <span className="label-text font-medium text-gray-700">Password</span>
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-base-content/40" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input input-bordered w-full pl-10 pr-10 focus:input-primary transition-all"
+                className="input input-bordered w-full pl-11 pr-12 bg-gray-50 border-gray-300 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
                 required
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-base-content/40 hover:text-base-content transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
+          {/* Remember Me */}
           <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-2">
-              <input 
-                type="checkbox" 
-                className="checkbox checkbox-primary" 
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={loading}
               />
-              <span className="label-text">Remember me</span>
+              <span className="label-text text-gray-700">Remember me</span>
             </label>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary w-full text-base-content hover:btn-primary hover:text-primary-content shadow-lg transition-all duration-200"
+            className="btn btn-primary btn-lg w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <>
-                <span className="loading loading-spinner"></span>
+              <span className="flex items-center gap-2">
+                <span className="loading loading-spinner loading-sm"></span>
                 Signing in...
-              </>
+              </span>
             ) : (
               'Sign In'
             )}
           </button>
         </form>
 
-        <div className="divider divider-horizontal before:bg-base-300 after:bg-base-300">or</div>
+        <div className="divider my-8 text-gray-500">OR</div>
 
-        <button className="btn btn-outline w-full mb-6 border-base-300 hover:border-primary hover:bg-primary/5 transition-all">
-          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-            <path
-              fill="currentColor"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="currentColor"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23.95-3.91.95-2.94 0-5.44-1.98-6.33-4.66H2.85v-3.66h3.82c.84 2.62 3.17 4.5 5.93 4.5 1.07 0 2.05-.32 2.89-.87l2.06 1.6C17.55 21.55 14.9 23 12 23z"
-            />
-            <path
-              fill="currentColor"
-              d="M5.05 15.18c-1.05-1.61-1.65-3.52-1.65-5.55 0-2.03.6-3.94 1.65-5.55l-2.06-1.6C2.68 5.55 2 7.96 2 10.5s.68 4.95 1.99 6.92l2.06-1.6z"
-            />
-            <path
-              fill="currentColor"
-              d="M12 5.6c1.68 0 3.18.6 4.42 1.57l-2.06 1.6c-.84-.52-1.85-.83-2.95-.83-2.76 0-5.13 1.85-5.93 4.5H4.18V9.33h3.82c.89-2.68 3.39-4.66 6-4.66z"
-            />
+        {/* Google Sign In (Placeholder) */}
+        <button className="btn btn-outline w-full border-gray-300 hover:border-emerald-500 hover:bg-emerald-50 transition-all mb-6">
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23.95-3.91.95-2.94 0-5.44-1.98-6.33-4.66H2.85v2.77h3.82c.84 2.62 3.17 4.5 5.93 4.5z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.21-.66-.34-1.36-.34-2.09s.13-1.43.34-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.2 2.18 6.93l3.66 2.84C6.86 7.21 9.29 5.38 12 5.38z"/>
           </svg>
           Continue with Google
         </button>
 
         <div className="text-center">
-          <p className="text-sm text-base-content/60">
+          <p className="text-gray-600">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/register" className="text-primary hover:underline font-medium transition-colors">
+            <Link href="/auth/register" className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors">
               Sign up here
             </Link>
           </p>
