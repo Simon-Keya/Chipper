@@ -102,7 +102,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Quick View Badge */}
           <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 z-10">
             <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-xl flex items-center justify-center gap-1.5">
-              <ExternalLink className="w-3.5 h-3.5 text-orange-600" />
+              <ExternalLink className="w-3.5 h-3.5 text-orange-400" />
               <span className="text-xs font-semibold text-gray-900">Quick View</span>
             </div>
           </div>
@@ -118,16 +118,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          <h3 className="font-bold text-base text-gray-900 mb-1.5 line-clamp-2 group-hover:text-orange-600 transition-colors">
+          <h3 className="font-bold text-base text-gray-900 mb-1.5 line-clamp-2 group-hover:text-orange-400 transition-colors">
             {product.name}
           </h3>
 
           <div className="flex items-center justify-between mb-3">
             <div className="text-xl font-bold text-gray-900">
-              KSh {product.price.toLocaleString()}
+              Ksh {product.price.toLocaleString()}
             </div>
             {isInStock && product.stock <= 10 && (
-              <div className="text-xs text-orange-600 font-semibold bg-orange-50 px-2 py-1 rounded-full">
+              <div className="text-xs text-orange-400 font-semibold bg-orange-50 px-2 py-1 rounded-full">
                 Only {product.stock} left
               </div>
             )}
