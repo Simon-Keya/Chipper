@@ -1,7 +1,7 @@
 'use client';
 
 import { Product } from "@/lib/types";
-import { ExternalLink, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState } from "react";
@@ -73,15 +73,14 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Quick View Badge */}
           <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 z-10">
             <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-xl flex items-center justify-center gap-1.5">
-              <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-xs font-semibold text-gray-900">Quick View</span>
+              <ShoppingCart className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-xs font-semibold text-gray-900">Quick Add</span>
             </div>
           </div>
         </div>
       </Link>
 
       {/* Product Info Section */}
-      {/* REDUCED SPACING: p-2 sm:p-3 for tighter layout */}
       <div className="flex flex-col flex-grow p-2 sm:p-3 relative z-10">
         <Link href={`/products/${product.id}`} className="flex-grow">
           {/* Category Badge */}
@@ -92,13 +91,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
 
           {/* Product Name */}
-          {/* REDUCED SPACING: mb-1.5, smaller font */}
           <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1.5 line-clamp-2 group-hover:text-emerald-700 transition-colors duration-300">
             {product.name}
           </h3>
 
           {/* Price Section */}
-          {/* REDUCED SPACING: No border-bottom, mb-3 */}
           <div className="flex items-center justify-between mb-3">
             <div className="text-lg sm:text-xl font-bold text-gray-900">
               Ksh {product.price.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -116,15 +113,18 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-2 mt-auto">
-          {/* View Details Button */}
-          <Link
-            href={`/products/${product.id}`}
-            className="group/btn w-full flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+          {/* Add to Cart Button - Replaced View Details */}
+          <button
+            disabled={!isInStock}
+            className="group/btn w-full flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+            aria-label={`Add ${product.name} to cart`}
           >
             <span className="absolute inset-0 bg-white opacity-0 group-hover/btn:opacity-20 transition-opacity"></span>
-            <ExternalLink className="w-3.5 h-3.5 group-hover/btn:rotate-12 transition-transform relative z-10" />
-            <span className="relative z-10">View Details</span>
-          </Link>
+            <ShoppingCart className="w-4 h-4 group-hover/btn:scale-110 transition-transform relative z-10" />
+            <span className="relative z-10">
+              {isInStock ? 'Add to Cart' : 'Out of Stock'}
+            </span>
+          </button>
 
           {/* WhatsApp Order Button */}
           <button
