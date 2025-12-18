@@ -517,7 +517,7 @@ const Header = () => {
                     Contact us via WhatsApp for instant support
                   </p>
                   <a
-                    href="https://wa.me/254700000000"
+                    href="https://wa.me/254768378046"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
