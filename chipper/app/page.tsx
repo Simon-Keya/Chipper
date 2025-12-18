@@ -1,4 +1,5 @@
 'use client';
+
 import { Clock, Leaf, Search, Shield, Star, Truck } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -56,8 +57,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-20 overflow-hidden">
-        {/* Animated Background */}
+      <section className="relative bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-16 md:py-20 overflow-hidden">
+        {/* Reduced padding on mobile */}
         <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-blue-400 animate-pulse"></div>
         
@@ -67,10 +68,10 @@ export default function HomePage() {
               <Star className="w-4 h-4 animate-spin-slow" />
               <span>Our Collection</span>
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight bg-gradient-to-r from-gray-900 via-emerald-700 to-blue-900 bg-clip-text text-transparent animate-fade-in-up">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight bg-gradient-to-r from-gray-900 via-emerald-700 to-blue-900 bg-clip-text text-transparent animate-fade-in-up">
               Welcome to Chipper
             </h1>
-            <p className="text-xl text-gray-700 mb-8 max-w-lg mx-auto leading-relaxed animate-slide-up">
+            <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-lg mx-auto leading-relaxed animate-slide-up">
               Discover premium products curated just for you. Fast delivery, secure payments, and exceptional service across Kenya.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-200">
@@ -84,13 +85,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Category Showcase */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12 animate-fade-in">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 animate-fade-in-up">Shop by Category</h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Explore our diverse range of categories tailored to your needs</p>
+      {/* Category Showcase - Reduced top padding */}
+      <section className="container mx-auto px-4 py-8 md:py-12">
+        <div className="text-center mb-8 md:mb-12 animate-fade-in">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 animate-fade-in-up">Shop by Category</h2>
+          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Explore our diverse range of categories tailored to your needs</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {categories.slice(0, 8).map((category, index) => (
             <Link 
               key={category.id} 
@@ -100,15 +101,17 @@ export default function HomePage() {
             >
               <div className="aspect-square relative">
                 <Image
-                  src={`/categories/${category.id}.jpg`}
+                  src={category.imageUrl || '/placeholder.jpg'}
                   alt={category.name}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
                   sizes="(max-width: 640px) 50vw, (max-width: 768px) 25vw, 20vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white font-semibold text-lg group-hover:scale-105 transition-transform duration-300">{category.name}</h3>
+                  <h3 className="text-white font-bold text-base md:text-lg drop-shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    {category.name}
+                  </h3>
                 </div>
               </div>
             </Link>
@@ -119,21 +122,21 @@ export default function HomePage() {
               className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center animate-fade-in-up"
               style={{ animationDelay: `${categories.length * 100}ms` }}
             >
-              <span className="text-2xl group-hover:scale-110 transition-transform duration-300">View All</span>
+              <span className="text-xl md:text-2xl font-bold text-gray-700 group-hover:scale-110 transition-transform duration-300">View All →</span>
             </Link>
           )}
         </div>
       </section>
 
       {/* Products Section */}
-      <section className="container mx-auto px-4 py-16 bg-gradient-to-b from-white to-gray-50">
-        <div className="text-center mb-12 animate-fade-in">
+      <section className="container mx-auto px-4 py-12 md:py-16 bg-gradient-to-b from-white to-gray-50">
+        <div className="text-center mb-10 md:mb-12 animate-fade-in">
           <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold animate-pulse-slow">
             <Star className="w-4 h-4 animate-spin-slow" />
             <span>Our Products</span>
           </div>
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 animate-fade-in-up">Best Sellers</h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Discover our top-rated and most popular products</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 animate-fade-in-up">Best Sellers</h2>
+          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Discover our top-rated and most popular products</p>
         </div>
 
         {loading ? (
@@ -152,7 +155,7 @@ export default function HomePage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 animate-fade-in">
             {products.slice(0, 8).map((product, index) => (
               <div key={product.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
                 <ProductCard product={product} />
@@ -161,7 +164,7 @@ export default function HomePage() {
           </div>
         )}
 
-        <div className="text-center mt-12 animate-fade-in">
+        <div className="text-center mt-10 md:mt-12 animate-fade-in">
           <Link href="/products">
             <button className="btn btn-primary btn-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
               View All Products
@@ -171,13 +174,13 @@ export default function HomePage() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="container mx-auto px-4 py-16 bg-white relative overflow-hidden">
+      <section className="container mx-auto px-4 py-12 md:py-16 bg-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-blue-50/50 animate-pulse-slow"></div>
-        <div className="text-center mb-12 relative z-10 animate-fade-in">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 animate-fade-in-up">Why Shop with Chipper?</h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Join thousands of satisfied customers who trust us for quality and service</p>
+        <div className="text-center mb-10 md:mb-12 relative z-10 animate-fade-in">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 animate-fade-in-up">Why Shop with Chipper?</h2>
+          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Join thousands of satisfied customers who trust us for quality and service</p>
         </div>
-        <div className="grid md:grid-cols-4 gap-8 relative z-10 animate-fade-in">
+        <div className="grid md:grid-cols-4 gap-6 md:gap-8 relative z-10 animate-fade-in">
           {[
             {
               icon: Truck,
@@ -206,7 +209,7 @@ export default function HomePage() {
           ].map((item, idx) => (
             <div 
               key={idx} 
-              className="group text-center p-8 rounded-xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 animate-fade-in-up"
+              className="group text-center p-6 md:p-8 rounded-xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 animate-fade-in-up"
               style={{ animationDelay: `${idx * 150}ms` }}
             >
               <div className={`w-16 h-16 bg-${item.color}-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-${item.color}-200 transition-colors duration-300 group-hover:scale-110`}>
@@ -220,10 +223,10 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter Signup */}
-      <section className="bg-gradient-to-r from-emerald-600 to-blue-600 py-16 text-white animate-fade-in">
+      <section className="bg-gradient-to-r from-emerald-600 to-blue-600 py-12 md:py-16 text-white animate-fade-in">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-fade-in-up">Stay Updated</h2>
-          <p className="text-emerald-100 text-lg mb-8 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Subscribe to our newsletter for exclusive deals, new arrivals, and special offers</p>
+          <p className="text-emerald-100 text-base md:text-lg mb-8 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">Subscribe to our newsletter for exclusive deals, new arrivals, and special offers</p>
           <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-2 animate-fade-in-up animation-delay-400">
             <input 
               type="email" 
