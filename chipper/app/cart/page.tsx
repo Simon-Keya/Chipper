@@ -1,23 +1,17 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import { fetchCart, removeFromCart, updateCartItem } from '@/lib/api';
+import { removeFromCart, updateCartItem } from '@/lib/api';
 import { Product } from '@/lib/types';
 import { CreditCard, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface CartItem {
-  id: number;
+  id?: number; // Optional for local-only items
   productId: number;
-  product: Product;
-  quantity: number;
-}
-
-interface ApiCartItem {
-  id: number;
   product: Product;
   quantity: number;
 }
@@ -33,105 +27,76 @@ const saveCartToStorage = (cartItems: CartItem[]) => {
 const loadCartFromStorage = (): CartItem[] => {
   if (typeof window === 'undefined') return [];
   const cart = localStorage.getItem(CART_KEY);
-  return cart ? JSON.parse(cart) : [];
+  if (!cart) return [];
+  try {
+    return JSON.parse(cart);
+  } catch {
+    return [];
+  }
 };
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [syncLoading, setSyncLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
 
   useEffect(() => {
     setMounted(true);
-    setCartItems(loadCartFromStorage());
+    const stored = loadCartFromStorage();
+    setCartItems(stored);
   }, []);
 
-  const syncCart = useCallback(async () => {
-    if (!mounted || !user) return;
-
-    setSyncLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const apiCart = await fetchCart(token);
-      
-      // Transform API cart to match local format
-      const apiItems: CartItem[] = apiCart.items.map((item: ApiCartItem) => ({
-        id: item.id,
-        productId: item.product.id,
-        product: item.product,
-        quantity: item.quantity,
-      }));
-
-      const localCart = loadCartFromStorage();
-      const mergedCart = [...apiItems];
-
-      localCart.forEach(localItem => {
-        const apiIndex = mergedCart.findIndex(item => item.product.id === localItem.product.id);
-        if (apiIndex >= 0) {
-          mergedCart[apiIndex].quantity = Math.max(mergedCart[apiIndex].quantity, localItem.quantity);
-        } else {
-          mergedCart.push(localItem);
-        }
-      });
-
-      setCartItems(mergedCart);
-      saveCartToStorage(mergedCart);
-    } catch (err) {
-      console.error('Failed to sync cart:', err);
-      // Fall back to local cart
-      setCartItems(loadCartFromStorage());
-    } finally {
-      setSyncLoading(false);
-    }
-  }, [mounted, user]);
-
-  useEffect(() => {
-    if (mounted && user) {
-      syncCart();
-    }
-  }, [mounted, user, syncCart]);
-
+  // Save to localStorage whenever cart changes
   useEffect(() => {
     if (mounted) {
       saveCartToStorage(cartItems);
     }
   }, [cartItems, mounted]);
 
-  const updateQuantity = async (itemId: number, newQuantity: number) => {
+  const updateQuantity = async (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    const token = localStorage.getItem('token');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    
+    // Update backend if logged in and item has server ID
     if (token && user) {
-      try {
-        await updateCartItem(itemId, newQuantity, token);
-      } catch (err) {
-        console.error('Failed to update cart item:', err);
+      const serverItem = cartItems.find(item => item.id && item.productId === productId);
+      if (serverItem?.id) {
+        try {
+          await updateCartItem(serverItem.id, newQuantity, token);
+        } catch (err) {
+          console.error('Failed to sync quantity:', err);
+          // Continue with local update even if sync fails
+        }
       }
     }
 
-    const newCartItems = cartItems.map(item => 
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
+    setCartItems(prev => 
+      prev.map(item => 
+        item.productId === productId 
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
     );
-    setCartItems(newCartItems);
   };
 
-  const removeItem = async (itemId: number) => {
-    const token = localStorage.getItem('token');
+  const removeItem = async (productId: number) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    
     if (token && user) {
-      try {
-        await removeFromCart(itemId, token);
-      } catch (err) {
-        console.error('Failed to remove cart item:', err);
+      const serverItem = cartItems.find(item => item.id && item.productId === productId);
+      if (serverItem?.id) {
+        try {
+          await removeFromCart(serverItem.id, token);
+        } catch (err) {
+          console.error('Failed to remove from server:', err);
+        }
       }
     }
 
-    const newCartItems = cartItems.filter(item => item.id !== itemId);
-    setCartItems(newCartItems);
+    setCartItems(prev => prev.filter(item => item.productId !== productId));
   };
 
   const getTotal = () => {
@@ -145,10 +110,8 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-base-200 flex items-center justify-center py-12">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-        </div>
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
@@ -159,21 +122,10 @@ export default function CartPage() {
         <div className="text-center max-w-md mx-auto p-8">
           <ShoppingBag className="w-24 h-24 text-base-content/40 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-base-content mb-4">Your Cart is Empty</h2>
-          <p className="text-base-content/60 mb-8">Looks like you haven&apos;t added anything to your cart yet.</p>
+          <p className="text-base-content/60 mb-8">Start adding items to see them here.</p>
           <Link href="/products">
-            <button className="btn btn-primary">Start Shopping</button>
+            <button className="btn btn-primary">Browse Products</button>
           </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (syncLoading) {
-    return (
-      <div className="min-h-screen bg-base-200 flex items-center justify-center py-12">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-2 text-base-content">Syncing your cart...</p>
         </div>
       </div>
     );
@@ -188,7 +140,7 @@ export default function CartPage() {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold">Shopping Cart</h1>
-                <p className="opacity-80">{cartItems.length} items</p>
+                <p className="opacity-80">{cartItems.length} item{cartItems.length !== 1 ? 's' : ''}</p>
               </div>
               <Link href="/products">
                 <button className="btn btn-ghost btn-sm">Continue Shopping</button>
@@ -199,7 +151,7 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="divide-y divide-base-300">
             {cartItems.map((item) => (
-              <div key={item.id} className="p-6">
+              <div key={item.productId} className="p-6">
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
                     <Image
@@ -213,16 +165,19 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-base-content mb-1 truncate">{item.product.name}</h3>
                     <p className="text-sm text-base-content/60 mb-2">KSh {item.product.price.toLocaleString()}</p>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2">
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)} 
+                        onClick={() => updateQuantity(item.productId, item.quantity - 1)} 
                         disabled={item.quantity <= 1}
                         className="btn btn-sm btn-outline btn-square"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="px-4 py-1 bg-base-200 rounded">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="btn btn-sm btn-outline btn-square">
+                      <span className="px-4 py-1 bg-base-200 rounded font-medium">{item.quantity}</span>
+                      <button 
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1)} 
+                        className="btn btn-sm btn-outline btn-square"
+                      >
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
@@ -231,7 +186,10 @@ export default function CartPage() {
                     <p className="font-bold text-lg text-base-content">
                       KSh {(item.product.price * item.quantity).toLocaleString()}
                     </p>
-                    <button onClick={() => removeItem(item.id)} className="btn btn-sm btn-error btn-square">
+                    <button 
+                      onClick={() => removeItem(item.productId)} 
+                      className="btn btn-sm btn-error btn-square"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -258,7 +216,7 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Checkout */}
           <div className="p-6 bg-base-300">
             <button
               onClick={handleCheckout}
