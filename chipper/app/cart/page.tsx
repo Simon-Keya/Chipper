@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import { removeFromCart, updateCartItem } from '@/lib/api';
+import { fetchCart, removeFromCart, updateCartItem } from '@/lib/api';
 import { Product } from '@/lib/types';
 import { CreditCard, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import Image from "next/image";
@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface CartItem {
-  id?: number; // Optional for local-only items
+  id?: number; // Server ID (optional for local items)
   productId: number;
   product: Product;
   quantity: number;
@@ -42,13 +42,59 @@ export default function CartPage() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // Load from localStorage on mount
   useEffect(() => {
     setMounted(true);
-    const stored = loadCartFromStorage();
-    setCartItems(stored);
+    setCartItems(loadCartFromStorage());
   }, []);
 
-  // Save to localStorage whenever cart changes
+  // Sync with backend when logged in
+  useEffect(() => {
+    if (!mounted || !user) return;
+
+    const syncWithBackend = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetchCart(token);
+        
+        // Safe access to items
+        const serverItems = response?.items || [];
+        
+        const transformed: CartItem[] = serverItems.map((item) => ({
+          id: item.id,
+          productId: item.product.id,
+          product: item.product,
+          quantity: item.quantity,
+        }));
+
+        // Merge with local cart (local wins on conflict)
+        const localCart = loadCartFromStorage();
+        const merged = [...transformed];
+
+        localCart.forEach(localItem => {
+          const existing = merged.find(m => m.productId === localItem.productId);
+          if (existing) {
+            existing.quantity = Math.max(existing.quantity, localItem.quantity);
+          } else {
+            merged.push(localItem);
+          }
+        });
+
+        setCartItems(merged);
+        saveCartToStorage(merged);
+      } catch (err) {
+        console.warn('Cart sync failed, using local cart:', err);
+        // Fall back to local cart — no crash
+        setCartItems(loadCartFromStorage());
+      }
+    };
+
+    syncWithBackend();
+  }, [mounted, user]);
+
+  // Save local changes
   useEffect(() => {
     if (mounted) {
       saveCartToStorage(cartItems);
@@ -58,17 +104,15 @@ export default function CartPage() {
   const updateQuantity = async (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    
-    // Update backend if logged in and item has server ID
+    const token = localStorage.getItem('token');
     if (token && user) {
       const serverItem = cartItems.find(item => item.id && item.productId === productId);
       if (serverItem?.id) {
         try {
           await updateCartItem(serverItem.id, newQuantity, token);
         } catch (err) {
-          console.error('Failed to sync quantity:', err);
-          // Continue with local update even if sync fails
+          console.error('Failed to update server cart:', err);
+          // Continue with local update
         }
       }
     }
@@ -83,8 +127,7 @@ export default function CartPage() {
   };
 
   const removeItem = async (productId: number) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    
+    const token = localStorage.getItem('token');
     if (token && user) {
       const serverItem = cartItems.find(item => item.id && item.productId === productId);
       if (serverItem?.id) {
@@ -135,7 +178,6 @@ export default function CartPage() {
     <div className="min-h-screen bg-base-200 py-8">
       <div className="container mx-auto px-4">
         <div className="bg-base-100 rounded-2xl shadow-sm overflow-hidden">
-          {/* Header */}
           <div className="bg-primary text-primary-content p-6">
             <div className="flex justify-between items-center">
               <div>
@@ -148,7 +190,6 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* Cart Items */}
           <div className="divide-y divide-base-300">
             {cartItems.map((item) => (
               <div key={item.productId} className="p-6">
@@ -198,7 +239,6 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Summary */}
           <div className="p-6 bg-base-200">
             <div className="space-y-3">
               <div className="flex justify-between text-sm text-base-content/70">
@@ -216,7 +256,6 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* Checkout */}
           <div className="p-6 bg-base-300">
             <button
               onClick={handleCheckout}
