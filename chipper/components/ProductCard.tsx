@@ -14,7 +14,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [adding, setAdding] = useState(false);
-  const { user } = useAuth(); // To check if logged in
+  const { user } = useAuth();
 
   const whatsappNumber = "254768378046";
   const whatsappMessage = encodeURIComponent(
@@ -37,28 +37,32 @@ export default function ProductCard({ product }: ProductCardProps) {
       // If logged in, sync with backend
       if (user) {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            productId: product.id,
-            quantity: 1,
-          }),
-        });
+        if (token) {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              productId: product.id,
+              quantity: 1,
+            }),
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to add to cart');
+          if (!response.ok) {
+            console.error('Backend add failed');
+            // Don't throw — continue with local
+          }
         }
       }
 
-      // Always update localStorage for offline/guest
+      // Always save full product to localStorage
       const cartKey = 'chipper_cart';
       const existingCart = JSON.parse(localStorage.getItem(cartKey) || '[]') as {
         productId: number;
         quantity: number;
+        product: Product;
       }[];
 
       const existingIndex = existingCart.findIndex(item => item.productId === product.id);
@@ -69,18 +73,17 @@ export default function ProductCard({ product }: ProductCardProps) {
         existingCart.push({
           productId: product.id,
           quantity: 1,
+          product: product, // ← CRITICAL: Save full product
         });
       }
 
       localStorage.setItem(cartKey, JSON.stringify(existingCart));
 
       // Visual feedback
-      const button = document.activeElement as HTMLButtonElement;
-      button?.classList.add('scale-95');
-      setTimeout(() => button?.classList.remove('scale-95'), 200);
-
-      // Success feedback
       alert('Added to cart! 🛒');
+
+      // Dispatch event for header update
+      window.dispatchEvent(new Event('cart-updated'));
     } catch (err) {
       console.error('Add to cart failed:', err);
       alert('Failed to add to cart. Please try again.');

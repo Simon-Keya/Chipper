@@ -28,7 +28,17 @@ const loadCartFromStorage = (): CartItemLocal[] => {
   const cart = localStorage.getItem(CART_KEY);
   if (!cart) return [];
   try {
-    return JSON.parse(cart);
+    const parsed = JSON.parse(cart);
+    // Validate structure
+    return Array.isArray(parsed) 
+      ? parsed.filter((item: any) => 
+          item && 
+          typeof item.productId === 'number' && 
+          item.product && 
+          typeof item.product === 'object' &&
+          typeof item.quantity === 'number'
+        )
+      : [];
   } catch {
     return [];
   }
@@ -43,10 +53,11 @@ export default function CartPage() {
 
   useEffect(() => {
     setMounted(true);
-    setCartItems(loadCartFromStorage());
+    const stored = loadCartFromStorage();
+    setCartItems(stored);
   }, []);
 
-  // Optional backend sync (safe, no crash)
+  // Safe backend sync
   useEffect(() => {
     if (!mounted || !user) return;
 
@@ -59,13 +70,14 @@ export default function CartPage() {
         const serverItems = Array.isArray(response?.items) ? response.items : [];
 
         const transformed: CartItemLocal[] = serverItems
-          .filter((item: any) => item.product) // Only valid items
+          .filter((item: any) => item && item.product && item.product.id)
           .map((item: any) => ({
             productId: item.product.id,
             product: item.product,
             quantity: item.quantity || 1,
           }));
 
+        // Merge: local overrides server quantity
         const localCart = loadCartFromStorage();
         const merged = [...transformed];
 
@@ -81,13 +93,14 @@ export default function CartPage() {
         setCartItems(merged);
         saveCartToStorage(merged);
       } catch (err) {
-        console.warn('Backend sync failed — using local cart only:', err);
+        console.warn('Backend sync failed — using local cart:', err);
       }
     };
 
     syncWithBackend();
   }, [mounted, user]);
 
+  // Save + notify header
   useEffect(() => {
     if (mounted) {
       saveCartToStorage(cartItems);
@@ -112,7 +125,10 @@ export default function CartPage() {
   };
 
   const getTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => {
+      const price = item.product.price || 0;
+      return total + (price * item.quantity);
+    }, 0);
   };
 
   const handleCheckout = () => {
@@ -177,7 +193,7 @@ export default function CartPage() {
                       {item.product.name || 'Unknown Product'}
                     </h3>
                     <p className="text-sm text-base-content/60 mb-2">
-                      KSh {item.product.price?.toLocaleString() || '0'}
+                      KSh {(item.product.price || 0).toLocaleString()}
                     </p>
                     <div className="flex items-center gap-2">
                       <button 
