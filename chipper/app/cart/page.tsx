@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
 import { fetchCart, removeFromCart, updateCartItem } from '@/lib/api';
 import { Product } from '@/lib/types';
 import { CreditCard, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
@@ -8,9 +7,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAuth } from '@/hooks/useAuth';
 
 interface CartItem {
-  id?: number; // Server ID (optional for local items)
+  id?: number;
   productId: number;
   product: Product;
   quantity: number;
@@ -42,13 +42,11 @@ export default function CartPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // Load from localStorage on mount
   useEffect(() => {
     setMounted(true);
     setCartItems(loadCartFromStorage());
   }, []);
 
-  // Sync with backend when logged in
   useEffect(() => {
     if (!mounted || !user) return;
 
@@ -58,18 +56,15 @@ export default function CartPage() {
         if (!token) return;
 
         const response = await fetchCart(token);
-        
-        // Safe access to items
-        const serverItems = response?.items || [];
-        
-        const transformed: CartItem[] = serverItems.map((item) => ({
+        const serverItems = Array.isArray(response?.items) ? response.items : [];
+
+        const transformed: CartItem[] = serverItems.map((item: any) => ({
           id: item.id,
-          productId: item.product.id,
+          productId: item.product?.id || 0,
           product: item.product,
-          quantity: item.quantity,
+          quantity: item.quantity || 1,
         }));
 
-        // Merge with local cart (local wins on conflict)
         const localCart = loadCartFromStorage();
         const merged = [...transformed];
 
@@ -85,8 +80,8 @@ export default function CartPage() {
         setCartItems(merged);
         saveCartToStorage(merged);
       } catch (err) {
-        console.warn('Cart sync failed, using local cart:', err);
-        // Fall back to local cart — no crash
+        console.warn('Backend cart sync failed — using local cart:', err);
+        // Critical: Do NOT crash — use local cart
         setCartItems(loadCartFromStorage());
       }
     };
@@ -94,10 +89,11 @@ export default function CartPage() {
     syncWithBackend();
   }, [mounted, user]);
 
-  // Save local changes
   useEffect(() => {
     if (mounted) {
       saveCartToStorage(cartItems);
+      // Dispatch update for header
+      window.dispatchEvent(new Event('cart-updated'));
     }
   }, [cartItems, mounted]);
 
@@ -112,7 +108,6 @@ export default function CartPage() {
           await updateCartItem(serverItem.id, newQuantity, token);
         } catch (err) {
           console.error('Failed to update server cart:', err);
-          // Continue with local update
         }
       }
     }
