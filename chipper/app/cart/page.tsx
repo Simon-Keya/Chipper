@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface CartItemLocal {
   productId: number;
-  product: Product;
+  product: Product | null; // Allow null for corrupted items
   quantity: number;
 }
 
@@ -29,17 +29,15 @@ const loadCartFromStorage = (): CartItemLocal[] => {
   if (!cart) return [];
   try {
     const parsed = JSON.parse(cart);
-    // Validate structure
-    return Array.isArray(parsed) 
-      ? parsed.filter((item: any) => 
-          item && 
-          typeof item.productId === 'number' && 
-          item.product && 
-          typeof item.product === 'object' &&
-          typeof item.quantity === 'number'
-        )
-      : [];
-  } catch {
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.map((item: any) => ({
+      productId: Number(item.productId) || 0,
+      product: item.product && typeof item.product === 'object' ? item.product : null,
+      quantity: Number(item.quantity) || 1,
+    })).filter(item => item.productId > 0 && item.quantity > 0);
+  } catch (error) {
+    console.error('Failed to parse cart from localStorage:', error);
     return [];
   }
 };
@@ -57,7 +55,6 @@ export default function CartPage() {
     setCartItems(stored);
   }, []);
 
-  // Safe backend sync
   useEffect(() => {
     if (!mounted || !user) return;
 
@@ -77,11 +74,11 @@ export default function CartPage() {
             quantity: item.quantity || 1,
           }));
 
-        // Merge: local overrides server quantity
         const localCart = loadCartFromStorage();
         const merged = [...transformed];
 
         localCart.forEach(localItem => {
+          if (!localItem.product) return; // Skip corrupted
           const existing = merged.find(m => m.productId === localItem.productId);
           if (existing) {
             existing.quantity = Math.max(existing.quantity, localItem.quantity);
@@ -100,7 +97,6 @@ export default function CartPage() {
     syncWithBackend();
   }, [mounted, user]);
 
-  // Save + notify header
   useEffect(() => {
     if (mounted) {
       saveCartToStorage(cartItems);
@@ -126,6 +122,7 @@ export default function CartPage() {
 
   const getTotal = () => {
     return cartItems.reduce((total, item) => {
+      if (!item.product) return total;
       const price = item.product.price || 0;
       return total + (price * item.quantity);
     }, 0);
@@ -144,7 +141,7 @@ export default function CartPage() {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 || cartItems.every(item => !item.product)) {
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center py-12">
         <div className="text-center max-w-md mx-auto p-8">
@@ -176,56 +173,63 @@ export default function CartPage() {
           </div>
 
           <div className="divide-y divide-base-300">
-            {cartItems.map((item) => (
-              <div key={item.productId} className="p-6">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={item.product.imageUrl || '/placeholder.jpg'}
-                      alt={item.product.name || 'Product'}
-                      width={80}
-                      height={80}
-                      className="rounded-lg object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base-content mb-1 truncate">
-                      {item.product.name || 'Unknown Product'}
-                    </h3>
-                    <p className="text-sm text-base-content/60 mb-2">
-                      KSh {(item.product.price || 0).toLocaleString()}
-                    </p>
-                    <div className="flex items-center gap-2">
+            {cartItems.map((item) => {
+              if (!item.product) {
+                // Skip corrupted items silently
+                return null;
+              }
+
+              return (
+                <div key={item.productId} className="p-6">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0">
+                      <Image
+                        src={item.product.imageUrl || '/placeholder.jpg'}
+                        alt={item.product.name || 'Product'}
+                        width={80}
+                        height={80}
+                        className="rounded-lg object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base-content mb-1 truncate">
+                        {item.product.name || 'Unknown Product'}
+                      </h3>
+                      <p className="text-sm text-base-content/60 mb-2">
+                        KSh {(item.product.price || 0).toLocaleString()}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => updateQuantity(item.productId, item.quantity - 1)} 
+                          disabled={item.quantity <= 1}
+                          className="btn btn-sm btn-outline btn-square"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="px-4 py-1 bg-base-200 rounded font-medium">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.productId, item.quantity + 1)} 
+                          className="btn btn-sm btn-outline btn-square"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <p className="font-bold text-lg text-base-content">
+                        KSh {((item.product.price || 0) * item.quantity).toLocaleString()}
+                      </p>
                       <button 
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)} 
-                        disabled={item.quantity <= 1}
-                        className="btn btn-sm btn-outline btn-square"
+                        onClick={() => removeItem(item.productId)} 
+                        className="btn btn-sm btn-error btn-square"
                       >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="px-4 py-1 bg-base-200 rounded font-medium">{item.quantity}</span>
-                      <button 
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)} 
-                        className="btn btn-sm btn-outline btn-square"
-                      >
-                        <Plus className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <p className="font-bold text-lg text-base-content">
-                      KSh {((item.product.price || 0) * item.quantity).toLocaleString()}
-                    </p>
-                    <button 
-                      onClick={() => removeItem(item.productId)} 
-                      className="btn btn-sm btn-error btn-square"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="p-6 bg-base-200">
