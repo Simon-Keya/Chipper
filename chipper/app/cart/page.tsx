@@ -9,8 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from '@/hooks/useAuth';
 
-interface CartItem {
-  id?: number;
+interface CartItemLocal {
   productId: number;
   product: Product;
   quantity: number;
@@ -18,13 +17,13 @@ interface CartItem {
 
 const CART_KEY = 'chipper_cart';
 
-const saveCartToStorage = (cartItems: CartItem[]) => {
+const saveCartToStorage = (cartItems: CartItemLocal[]) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
   }
 };
 
-const loadCartFromStorage = (): CartItem[] => {
+const loadCartFromStorage = (): CartItemLocal[] => {
   if (typeof window === 'undefined') return [];
   const cart = localStorage.getItem(CART_KEY);
   if (!cart) return [];
@@ -36,7 +35,7 @@ const loadCartFromStorage = (): CartItem[] => {
 };
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItemLocal[]>([]);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -47,6 +46,7 @@ export default function CartPage() {
     setCartItems(loadCartFromStorage());
   }, []);
 
+  // Optional backend sync (safe, no crash)
   useEffect(() => {
     if (!mounted || !user) return;
 
@@ -58,12 +58,13 @@ export default function CartPage() {
         const response = await fetchCart(token);
         const serverItems = Array.isArray(response?.items) ? response.items : [];
 
-        const transformed: CartItem[] = serverItems.map((item: any) => ({
-          id: item.id,
-          productId: item.product?.id || 0,
-          product: item.product,
-          quantity: item.quantity || 1,
-        }));
+        const transformed: CartItemLocal[] = serverItems
+          .filter((item: any) => item.product) // Only valid items
+          .map((item: any) => ({
+            productId: item.product.id,
+            product: item.product,
+            quantity: item.quantity || 1,
+          }));
 
         const localCart = loadCartFromStorage();
         const merged = [...transformed];
@@ -80,9 +81,7 @@ export default function CartPage() {
         setCartItems(merged);
         saveCartToStorage(merged);
       } catch (err) {
-        console.warn('Backend cart sync failed — using local cart:', err);
-        // Critical: Do NOT crash — use local cart
-        setCartItems(loadCartFromStorage());
+        console.warn('Backend sync failed — using local cart only:', err);
       }
     };
 
@@ -92,48 +91,23 @@ export default function CartPage() {
   useEffect(() => {
     if (mounted) {
       saveCartToStorage(cartItems);
-      // Dispatch update for header
       window.dispatchEvent(new Event('cart-updated'));
     }
   }, [cartItems, mounted]);
 
-  const updateQuantity = async (productId: number, newQuantity: number) => {
+  const updateQuantity = (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    const token = localStorage.getItem('token');
-    if (token && user) {
-      const serverItem = cartItems.find(item => item.id && item.productId === productId);
-      if (serverItem?.id) {
-        try {
-          await updateCartItem(serverItem.id, newQuantity, token);
-        } catch (err) {
-          console.error('Failed to update server cart:', err);
-        }
-      }
-    }
-
-    setCartItems(prev => 
-      prev.map(item => 
-        item.productId === productId 
+    setCartItems(prev =>
+      prev.map(item =>
+        item.productId === productId
           ? { ...item, quantity: newQuantity }
           : item
       )
     );
   };
 
-  const removeItem = async (productId: number) => {
-    const token = localStorage.getItem('token');
-    if (token && user) {
-      const serverItem = cartItems.find(item => item.id && item.productId === productId);
-      if (serverItem?.id) {
-        try {
-          await removeFromCart(serverItem.id, token);
-        } catch (err) {
-          console.error('Failed to remove from server:', err);
-        }
-      }
-    }
-
+  const removeItem = (productId: number) => {
     setCartItems(prev => prev.filter(item => item.productId !== productId));
   };
 
@@ -192,15 +166,19 @@ export default function CartPage() {
                   <div className="flex-shrink-0">
                     <Image
                       src={item.product.imageUrl || '/placeholder.jpg'}
-                      alt={item.product.name}
+                      alt={item.product.name || 'Product'}
                       width={80}
                       height={80}
                       className="rounded-lg object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base-content mb-1 truncate">{item.product.name}</h3>
-                    <p className="text-sm text-base-content/60 mb-2">KSh {item.product.price.toLocaleString()}</p>
+                    <h3 className="font-semibold text-base-content mb-1 truncate">
+                      {item.product.name || 'Unknown Product'}
+                    </h3>
+                    <p className="text-sm text-base-content/60 mb-2">
+                      KSh {item.product.price?.toLocaleString() || '0'}
+                    </p>
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => updateQuantity(item.productId, item.quantity - 1)} 
@@ -220,7 +198,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <p className="font-bold text-lg text-base-content">
-                      KSh {(item.product.price * item.quantity).toLocaleString()}
+                      KSh {((item.product.price || 0) * item.quantity).toLocaleString()}
                     </p>
                     <button 
                       onClick={() => removeItem(item.productId)} 
