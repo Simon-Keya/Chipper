@@ -3,7 +3,6 @@
 import { getToken, removeToken, setToken } from '@/lib/auth';
 import { createContext, useContext, useEffect, useState } from 'react';
 
-// Define User locally — your types.ts doesn't export it
 interface User {
   userId: number;
   username: string;
@@ -36,29 +35,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const decodeToken = (token: string): User | null => {
     try {
       const payload = token.split('.')[1];
+      if (!payload) return null;
       const decoded = JSON.parse(atob(payload));
       return {
-        userId: decoded.userId,
-        username: decoded.username || decoded.sub || 'User',
+        userId: decoded.userId || decoded.id || 0,
+        username: decoded.username || decoded.sub || decoded.name || 'User',
         role: decoded.role || 'user',
-        email: decoded.email || '',
+        email: decoded.email || undefined,
       };
-    } catch {
+    } catch (error) {
+      console.warn('Invalid token format:', error);
       return null;
     }
   };
 
   useEffect(() => {
-    const token = getToken();
-    if (token) {
-      const decoded = decodeToken(token);
-      if (decoded) {
-        setUser(decoded);
-      } else {
+    const initAuth = () => {
+      try {
+        const token = getToken();
+        if (token) {
+          const decoded = decodeToken(token);
+          if (decoded) {
+            setUser(decoded);
+          } else {
+            // Invalid token — remove it
+            removeToken();
+          }
+        }
+      } catch (error) {
+        console.error('Auth init error:', error);
         removeToken();
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = (token: string) => {
