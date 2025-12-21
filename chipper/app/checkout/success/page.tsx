@@ -1,77 +1,117 @@
 'use client';
 
-import { CheckCircle, Clock, Shield, Truck } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect } from 'react';
+import { CheckCircle, Clock, Package, Shield, Truck } from 'lucide-react';
+import Link from "next/link";
+import { useEffect } from "react";
 
 export default function SuccessPage() {
   useEffect(() => {
-    // Clear cart only on client side
+    // Safely clear cart after successful order
     if (typeof window !== 'undefined') {
       localStorage.removeItem('chipper_cart');
+      // Notify header to update cart count
+      window.dispatchEvent(new Event('cart-updated'));
     }
   }, []);
 
+  const orderNumber = `ORD-${Date.now().toString().slice(-8)}`;
+
   return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center py-12">
+    <div className="min-h-screen bg-base-200 flex items-center justify-center py-12 px-4">
       <div className="max-w-2xl w-full mx-auto">
-        {/* Success Banner */}
-        <div className="bg-success text-success-content rounded-2xl p-8 text-center mb-8">
-          <CheckCircle className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-          <p className="text-lg opacity-90">Thank you for your purchase. Your order has been placed successfully.</p>
-        </div>
+        {/* Main Success Card */}
+        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+          {/* Green Header */}
+          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-10 text-center">
+            <CheckCircle className="w-20 h-20 mx-auto mb-6" />
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Order Confirmed!</h1>
+            <p className="text-xl opacity-90">
+              Thank you for shopping with Chipper! 🎉
+            </p>
+          </div>
 
-        {/* Order Summary */}
-        <div className="bg-base-100 rounded-2xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-base-content mb-4">Order Summary</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-base-content/70">Order Number:</span>
-              <span className="font-semibold">ORD-{Date.now().toString().slice(-6)}</span>
+          {/* Content */}
+          <div className="p-8 md:p-10">
+            <div className="text-center mb-10">
+              <p className="text-lg text-base-content/80 mb-2">
+                Your order has been successfully placed.
+              </p>
+              <p className="text-2xl font-bold text-primary">
+                {orderNumber}
+              </p>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-base-content/70">Estimated Delivery:</span>
-              <span className="font-semibold">2-3 business days</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-base-content/70">Status:</span>
-              <span className="badge badge-success">Confirmed</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Delivery Info */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-base-100 rounded-xl p-4 text-center">
-            <Truck className="w-8 h-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold text-base-content mb-1">Fast Delivery</h3>
-            <p className="text-sm text-base-content/60">Arrives in 2-3 days</p>
-          </div>
-          <div className="bg-base-100 rounded-xl p-4 text-center">
-            <Shield className="w-8 h-8 text-success mx-auto mb-2" />
-            <h3 className="font-semibold text-base-content mb-1">Secure Payment</h3>
-            <p className="text-sm text-base-content/60">Your data is protected</p>
-          </div>
-          <div className="bg-base-100 rounded-xl p-4 text-center">
-            <Clock className="w-8 h-8 text-warning mx-auto mb-2" />
-            <h3 className="font-semibold text-base-content mb-1">Track Order</h3>
-            <p className="text-sm text-base-content/60">Real-time updates</p>
-          </div>
-        </div>
+            {/* Info Grid */}
+            <div className="grid md:grid-cols-3 gap-6 mb-10">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Truck className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h3 className="font-bold text-base-content mb-1">Fast Delivery</h3>
+                <p className="text-sm text-base-content/70">2-5 business days nationwide</p>
+              </div>
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/profile/orders">
-            <button className="btn btn-primary flex-1">
-              View Order
-            </button>
-          </Link>
-          <Link href="/products">
-            <button className="btn btn-outline flex-1">
-              Continue Shopping
-            </button>
-          </Link>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Package className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-base-content mb-1">Easy Tracking</h3>
+                <p className="text-sm text-base-content/70">You&apos;ll get updates via SMS</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-amber-600" />
+                </div>
+                <h3 className="font-bold text-base-content mb-1">Secure & Trusted</h3>
+                <p className="text-sm text-base-content/70">Pay on delivery available</p>
+              </div>
+            </div>
+
+            {/* Next Steps */}
+            <div className="bg-base-200 rounded-2xl p-6 mb-8">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                What happens next?
+              </h3>
+              <ol className="space-y-3 text-base-content/80">
+                <li className="flex gap-3">
+                  <span className="font-bold text-primary">1.</span>
+                  We&apos;ll confirm your order via SMS within 1 hour
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-bold text-primary">2.</span>
+                  Your items will be packed and dispatched
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-bold text-primary">3.</span>
+                  Pay when you receive your package (Cash on Delivery)
+                </li>
+              </ol>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/profile/orders" className="flex-1">
+                <button className="btn btn-primary btn-lg w-full">
+                  View My Orders
+                </button>
+              </Link>
+              <Link href="/products" className="flex-1">
+                <button className="btn btn-outline btn-lg w-full">
+                  Continue Shopping
+                </button>
+              </Link>
+            </div>
+
+            {/* Support Note */}
+            <p className="text-center text-sm text-base-content/60 mt-8">
+              Need help? Contact us on WhatsApp:{' '}
+              <a href="https://wa.me/254768378046" className="link text-primary font-medium">
+                +254 768 378 046
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

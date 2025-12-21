@@ -14,34 +14,37 @@ export default function CategoryFilter({
   onChange,
 }: CategoryFilterProps) {
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
-      {/* All Products */}
+    <div className="flex flex-wrap gap-3 mb-8">
+      {/* All Products Button */}
       <button
-        className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors duration-300 ${
-          selectedCategory === null
-            ? 'bg-primary text-amber-600 border-primary'
-            : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-amber-500'
-        }`}
         onClick={() => onChange(null)}
+        className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md ${
+          selectedCategory === null
+            ? 'bg-primary text-white border-2 border-primary'
+            : 'bg-base-100 text-base-content border-2 border-base-300 hover:border-primary hover:bg-primary/10'
+        }`}
+        aria-label="Show all products"
+        aria-pressed={selectedCategory === null}
       >
-        All
+        All Products
       </button>
 
-      {/* Individual Categories */}
-      {categories.map((cat) => (
+      {/* Category Buttons */}
+      {categories.map((category) => (
         <button
-          key={cat.id}
-          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors duration-300 ${
-            selectedCategory === cat.id
-              ? 'bg-primary text-amber-600 border-primary'
-              : 'bg-base-100 text-primary border-primary hover:bg-primary hover:text-amber-500'
+          key={category.id}
+          onClick={() => onChange(category.id)}
+          className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md ${
+            selectedCategory === category.id
+              ? 'bg-primary text-white border-2 border-primary'
+              : 'bg-base-100 text-base-content border-2 border-base-300 hover:border-primary hover:bg-primary/10'
           }`}
-          onClick={() => onChange(cat.id)}
+          aria-label={`Filter by ${category.name}`}
+          aria-pressed={selectedCategory === category.id}
         >
-          {cat.name}
+          {category.name}
         </button>
       ))}
     </div>
   );
 }
-
