@@ -2,7 +2,7 @@
 
 import { fetchOrders } from '@/lib/api';
 import { Order } from '@/lib/types';
-import { ChevronRight, LayoutDashboard, ListOrdered, Package, ShoppingBag, Users } from 'lucide-react';
+import { Boxes, ChevronRight, LayoutDashboard, ListOrdered, Package, ShoppingBag, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -51,119 +51,141 @@ export default function AdminDashboard() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-orange-50 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-black text-gray-900 mb-4">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
             Admin Dashboard
           </h1>
-          <p className="text-xl text-gray-600">Welcome back! Here is what is happening today</p>
+          <p className="text-lg text-gray-600">Welcome back! Here&apos;s your store overview</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-emerald-500">
-            <div className="flex items-center justify-between mb-4">
-              <ShoppingBag className="w-10 h-10 text-emerald-600" />
-              <span className="text-3xl font-bold text-emerald-600">{stats.totalOrders}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-emerald-500">
+            <div className="flex items-center justify-between mb-3">
+              <ShoppingBag className="w-8 h-8 text-emerald-600" />
+              <span className="text-2xl font-bold text-emerald-600">{stats.totalOrders}</span>
             </div>
-            <p className="text-gray-600">Total Orders</p>
+            <p className="text-gray-600 font-medium">Total Orders</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-orange-500">
-            <div className="flex items-center justify-between mb-4">
-              <Package className="w-10 h-10 text-orange-600" />
-              <span className="text-3xl font-bold text-orange-600">{stats.pendingOrders}</span>
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+            <div className="flex items-center justify-between mb-3">
+              <Package className="w-8 h-8 text-orange-600" />
+              <span className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</span>
             </div>
-            <p className="text-gray-600">Pending Orders</p>
+            <p className="text-gray-600 font-medium">Pending Orders</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl font-bold text-green-600">KSh</span>
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="text-lg font-bold text-green-600">KSh</span>
               </div>
-              <span className="text-3xl font-bold text-green-600">
+              <span className="text-2xl font-bold text-green-600">
                 {stats.revenueToday.toLocaleString()}
               </span>
             </div>
-            <p className="text-gray-600">Today&apos;s Revenue</p>
+            <p className="text-gray-600 font-medium">Today&apos;s Revenue</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
-            <div className="flex items-center justify-between mb-4">
-              <Users className="w-10 h-10 text-blue-600" />
-              <span className="text-3xl font-bold text-blue-600">{stats.activeUsers}</span>
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between mb-3">
+              <Users className="w-8 h-8 text-blue-600" />
+              <span className="text-2xl font-bold text-blue-600">{stats.activeUsers}</span>
             </div>
-            <p className="text-gray-600">Active Customers</p>
+            <p className="text-gray-600 font-medium">Active Customers</p>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <Link href="/admin/products" className="group">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-8 text-white shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
-              <ShoppingBag className="w-16 h-16 mb-4 opacity-90" />
-              <h3 className="text-2xl font-bold mb-2">Manage Products</h3>
-              <p className="opacity-90">Add, edit, and organize your inventory</p>
-              <ChevronRight className="w-8 h-8 mt-6 group-hover:translate-x-2 transition" />
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <ShoppingBag className="w-10 h-10 text-emerald-600" />
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Manage Products</h3>
+              <p className="text-gray-600 text-sm">Add, edit, and organize inventory</p>
+            </div>
+          </Link>
+
+          <Link href="/admin/categories" className="group">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <Boxes className="w-10 h-10 text-purple-600" />
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Manage Categories</h3>
+              <p className="text-gray-600 text-sm">Create and organize product categories</p>
             </div>
           </Link>
 
           <Link href="/admin/orders" className="group">
-            <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl p-8 text-white shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
-              <ListOrdered className="w-16 h-16 mb-4 opacity-90" />
-              <h3 className="text-2xl font-bold mb-2">View Orders</h3>
-              <p className="opacity-90">Process, track, and manage customer orders</p>
-              <ChevronRight className="w-8 h-8 mt-6 group-hover:translate-x-2 transition" />
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <ListOrdered className="w-10 h-10 text-orange-600" />
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">View Orders</h3>
+              <p className="text-gray-600 text-sm">Process and track customer orders</p>
             </div>
           </Link>
 
           <Link href="/admin/analytics" className="group">
-            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-8 text-white shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
-              <LayoutDashboard className="w-16 h-16 mb-4 opacity-90" />
-              <h3 className="text-2xl font-bold mb-2">Analytics</h3>
-              <p className="opacity-90">Sales reports and business insights</p>
-              <ChevronRight className="w-8 h-8 mt-6 group-hover:translate-x-2 transition" />
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <LayoutDashboard className="w-10 h-10 text-indigo-600" />
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Analytics</h3>
+              <p className="text-gray-600 text-sm">Sales reports and insights</p>
             </div>
           </Link>
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white rounded-3xl shadow-xl p-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Latest Orders</h2>
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Latest Orders</h2>
           {orders.length === 0 ? (
-            <p className="text-center text-gray-500 py-12">No orders yet</p>
+            <div className="text-center py-16">
+              <Package className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No orders yet — start selling!</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-gray-200 rounded-xl overflow-hidden">
+                <div key={order.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+                  <div className="flex items-center gap-5 mb-4 sm:mb-0">
+                    <div className="w-14 h-14 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
                         src={order.product.imageUrl || '/placeholder.jpg'}
                         alt={order.product.name}
-                        width={64}
-                        height={64}
+                        width={56}
+                        height={56}
                         className="object-cover"
                       />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg">{order.product.name}</h4>
-                      <p className="text-gray-600">Order #{order.id} • {new Date(order.createdAt).toLocaleDateString()}</p>
+                      <h4 className="font-semibold text-gray-900">{order.product.name}</h4>
+                      <p className="text-sm text-gray-600">Order #{order.id} • {new Date(order.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">KSh {order.total.toLocaleString()}</p>
-                    <span className={`badge badge-lg mt-2 ${
-                      order.status === 'Delivered' ? 'badge-success' :
-                      order.status === 'Shipped' ? 'badge-info' :
-                      order.status === 'Processing' ? 'badge-warning' :
-                      'badge-error'
-                    }`}>
-                      {order.status}
-                    </span>
+                  <div className="flex items-center justify-between sm:justify-end gap-6">
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-gray-900">KSh {order.total.toLocaleString()}</p>
+                      <span className={`badge mt-1 ${
+                        order.status === 'Delivered' ? 'badge-success' :
+                        order.status === 'Shipped' ? 'badge-info' :
+                        order.status === 'Processing' ? 'badge-warning' :
+                        'badge-error'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
