@@ -2,7 +2,7 @@
 
 import { fetchOrders } from '@/lib/api';
 import { Order } from '@/lib/types';
-import { CheckCircle, DollarSign, ShoppingBag, TrendingUp } from 'lucide-react';
+import { DollarSign, ShoppingBag, TrendingUp, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface AnalyticsData {
@@ -10,7 +10,7 @@ interface AnalyticsData {
   totalOrders: number;
   totalCustomers: number;
   averageOrderValue: number;
-  ordersByStatus: { [key: string]: number };
+  ordersByStatus: { name: string; count: number }[];
   recentOrders: Order[];
 }
 
@@ -20,7 +20,7 @@ export default function AdminAnalyticsPage() {
     totalOrders: 0,
     totalCustomers: 0,
     averageOrderValue: 0,
-    ordersByStatus: {},
+    ordersByStatus: [],
     recentOrders: [],
   });
   const [loading, setLoading] = useState(true);
@@ -29,27 +29,38 @@ export default function AdminAnalyticsPage() {
     const loadAnalytics = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) return;
+        if (!token) {
+          setLoading(false);
+          return;
+        }
 
         const orders = await fetchOrders(token);
 
-        // Mock analytics calculation
         const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
         const totalOrders = orders.length;
-        const totalCustomers = new Set(orders.map(order => order.customerDetails)).size;
-        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        const uniqueCustomers = new Set(orders.map(order => order.customerDetails || order.id)).size;
+        const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
-        const ordersByStatus = orders.reduce((acc, order) => {
-          acc[order.status] = (acc[order.status] || 0) + 1;
+        // Status breakdown
+        const statusCount = orders.reduce((acc, order) => {
+          const status = order.status || 'Unknown';
+          acc[status] = (acc[status] || 0) + 1;
           return acc;
-        }, {} as { [key: string]: number });
+        }, {} as Record<string, number>);
 
-        const recentOrders = orders.slice(0, 5).reverse(); // Last 5 orders
+        const ordersByStatus = Object.entries(statusCount).map(([name, count]) => ({
+          name,
+          count,
+        }));
+
+        const recentOrders = orders
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 8);
 
         setAnalytics({
           totalRevenue,
           totalOrders,
-          totalCustomers,
+          totalCustomers: uniqueCustomers,
           averageOrderValue,
           ordersByStatus,
           recentOrders,
@@ -66,130 +77,121 @@ export default function AdminAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Analytics Dashboard</h1>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-orange-50 py-12 px-4">
+      <div className="container mx-auto max-w-7xl">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-12 text-center">Analytics Dashboard</h1>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-success" />
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-emerald-500">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold">Total Revenue</h3>
-                <p className="text-2xl font-bold text-success">KSh {analytics.totalRevenue.toLocaleString()}</p>
+                <p className="text-gray-600 font-medium">Total Revenue</p>
+                <p className="text-3xl font-bold text-emerald-600 mt-2">
+                  KSh {analytics.totalRevenue.toLocaleString()}
+                </p>
               </div>
+              <DollarSign className="w-12 h-12 text-emerald-500 opacity-20" />
             </div>
           </div>
-        </div>
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body">
-            <div className="flex items-center gap-3">
-              <ShoppingBag className="w-8 h-8 text-primary" />
-              <div>
-                <h3 className="text-lg font-semibold">Total Orders</h3>
-                <p className="text-2xl font-bold text-primary">{analytics.totalOrders}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-warning" />
-              <div>
-                <h3 className="text-lg font-semibold">Avg Order Value</h3>
-                <p className="text-2xl font-bold text-warning">KSh {analytics.averageOrderValue.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-8 h-8 text-info" />
-              <div>
-                <h3 className="text-lg font-semibold">Completed Orders</h3>
-                <p className="text-2xl font-bold text-info">{analytics.ordersByStatus.Delivered || 0}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Order Status Breakdown */}
-      <div className="card bg-base-100 shadow-sm mb-6">
-        <div className="card-body">
-          <h2 className="card-title">Order Status Breakdown</h2>
-          <div className="overflow-x-auto">
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(analytics.ordersByStatus).map(([status, count]) => (
-                  <tr key={status}>
-                    <td>{status}</td>
-                    <td>{count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-orange-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 font-medium">Total Orders</p>
+                <p className="text-3xl font-bold text-orange-600 mt-2">{analytics.totalOrders}</p>
+              </div>
+              <ShoppingBag className="w-12 h-12 text-orange-500 opacity-20" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 font-medium">Unique Customers</p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">{analytics.totalCustomers}</p>
+              </div>
+              <Users className="w-12 h-12 text-blue-500 opacity-20" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 font-medium">Avg Order Value</p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">
+                  KSh {analytics.averageOrderValue.toLocaleString()}
+                </p>
+              </div>
+              <TrendingUp className="w-12 h-12 text-purple-500 opacity-20" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Recent Orders */}
-      <div className="card bg-base-100 shadow-sm">
-        <div className="card-body">
-          <h2 className="card-title">Recent Orders</h2>
-          <div className="overflow-x-auto">
-            <table className="table table-compact w-full">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analytics.recentOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td>#{order.id}</td>
-                    <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`badge ${
-                        order.status === 'Delivered' ? 'badge-success' :
-                        order.status === 'Shipped' ? 'badge-info' :
-                        order.status === 'Processing' ? 'badge-warning' : 'badge-error'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td>KSh {order.total.toLocaleString()}</td>
-                  </tr>
-                ))}
-                {analytics.recentOrders.length === 0 && (
+        {/* Status Breakdown */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">Orders by Status</h3>
+          {analytics.ordersByStatus.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {analytics.ordersByStatus.map((status) => (
+                <div key={status.name} className="text-center p-6 bg-gray-50 rounded-xl">
+                  <p className="text-4xl font-bold text-gray-900">{status.count}</p>
+                  <p className="text-gray-600 mt-2">{status.name}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 py-20">No order data yet</p>
+          )}
+        </div>
+
+        {/* Recent Orders */}
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">Recent Orders</h3>
+          {analytics.recentOrders.length === 0 ? (
+            <p className="text-center text-gray-500 py-12">No orders yet</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table w-full">
+                <thead>
                   <tr>
-                    <td colSpan={4} className="text-center text-base-content/60">
-                      No recent orders
-                    </td>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Total</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {analytics.recentOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td className="font-bold">#{order.id}</td>
+                      <td>{order.customerDetails || 'N/A'}</td>
+                      <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`badge ${
+                          order.status === 'Delivered' ? 'badge-success' :
+                          order.status === 'Shipped' ? 'badge-info' :
+                          order.status === 'Processing' ? 'badge-warning' :
+                          'badge-error'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="font-bold">KSh {order.total.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
