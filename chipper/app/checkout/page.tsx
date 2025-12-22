@@ -85,7 +85,7 @@ export default function CheckoutPage() {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Please login to place order');
 
-      // Build customer details string
+    
       const customerDetails = [
         address.phone,
         address.line1,
@@ -180,7 +180,7 @@ export default function CheckoutPage() {
             </form>
           )}
 
-          {/* Confirmation */}
+        
           {step === 2 && (
             <div className="p-8">
               <div className="flex items-center gap-4 mb-8">

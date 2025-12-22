@@ -206,7 +206,7 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Sidebar Summary */}
+  
           <div className="lg:col-span-4">
             <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 sticky top-28">
               <h2 className="text-xl font-bold text-slate-800 mb-6">Order Summary</h2>
