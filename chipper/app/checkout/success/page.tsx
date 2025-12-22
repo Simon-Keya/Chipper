@@ -2,19 +2,25 @@
 
 import { CheckCircle, Clock, Package, Shield, Truck } from 'lucide-react';
 import Link from "next/link";
-import { useSearchParams } from 'next/navigation';
 import { useEffect } from "react";
 
-export default function SuccessPage() {
-  const searchParams = useSearchParams();
-  const orderId = searchParams.get('orderId') || `ORD-${Date.now().toString().slice(-8)}`;
+// Generate order number safely on client only
+function generateOrderNumber(): string {
+  if (typeof window === 'undefined') {
+    return 'ORD-XXXXXXXX';
+  }
+  return `ORD-${Date.now().toString().slice(-8)}`;
+}
 
+export default function SuccessPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('chipper_cart');
       window.dispatchEvent(new Event('cart-updated'));
     }
   }, []);
+
+  const orderNumber = generateOrderNumber();
 
   return (
     <div className="min-h-screen bg-base-200 flex items-center justify-center py-12 px-4">
@@ -34,7 +40,7 @@ export default function SuccessPage() {
                 Your order has been successfully placed.
               </p>
               <p className="text-2xl font-bold text-primary">
-                {orderId}
+                {orderNumber}
               </p>
             </div>
 
