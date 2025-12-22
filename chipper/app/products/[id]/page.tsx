@@ -24,14 +24,22 @@ export default function ProductDetailsPage() {
       const loadData = async () => {
         setLoading(true);
         try {
-          const [prodData, reviewData] = await Promise.all([
-            fetchProduct(id),
-            fetchReviews(Number(id)),
-          ]);
-          setProduct(prodData);
-          setReviews(reviewData || []);
+          const prodData = await fetchProduct(id);
+          // Ensure prodData is an object
+          if (prodData && typeof prodData === 'object') {
+            setProduct(prodData as Product);
+          } else {
+            console.error('Invalid product data:', prodData);
+            setProduct(null);
+          }
+
+          const reviewData = await fetchReviews(Number(id));
+          // Ensure reviewData is array
+          setReviews(Array.isArray(reviewData) ? reviewData : []);
         } catch (error) {
           console.error('Failed to load product data:', error);
+          setProduct(null);
+          setReviews([]);
         } finally {
           setLoading(false);
         }
@@ -43,8 +51,25 @@ export default function ProductDetailsPage() {
   const handleAddToCart = () => {
     if (!product || product.stock < quantity) return;
 
-    const cart = JSON.parse(localStorage.getItem('chipper_cart') || '[]');
-    const existing = cart.find((item: { productId: number }) => item.productId === product.id);
+    // Safe cart load
+    let cart: Array<{
+      productId: number;
+      product: { id: number; name: string; price: number; imageUrl?: string };
+      quantity: number;
+    }> = [];
+
+    try {
+      const stored = localStorage.getItem('chipper_cart');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        cart = Array.isArray(parsed) ? parsed : [];
+      }
+    } catch (e) {
+      console.error('Corrupted cart data, resetting');
+      cart = [];
+    }
+
+    const existing = cart.find(item => item.productId === product.id);
 
     if (existing) {
       existing.quantity += quantity;
@@ -83,7 +108,7 @@ export default function ProductDetailsPage() {
         comment: newReview.comment,
       }, token);
 
-      setReviews([savedReview, ...reviews]);
+      setReviews(prev => [savedReview, ...prev]);
       setNewReview({ rating: 5, comment: '' });
       setShowReviewForm(false);
       alert('Thank you! Your review has been submitted.');
@@ -105,10 +130,21 @@ export default function ProductDetailsPage() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
 
-  if (loading || !product) {
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <div className="bg-white rounded-3xl shadow-xl p-12 max-w-md mx-auto">
+          <h2 className="text-3xl font-bold text-error mb-4">Product Not Found</h2>
+          <p className="text-gray-600">The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+        </div>
       </div>
     );
   }
