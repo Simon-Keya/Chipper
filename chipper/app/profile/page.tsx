@@ -1,21 +1,41 @@
-
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
+import { fetchOrders } from '@/lib/api';
 import { Package, Settings, ShoppingBag, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ProfilePage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const [orderCount, setOrderCount] = useState(0);
+  const [wishlistCount] = useState(5); // Hardcoded for now
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/auth/login');
     }
   }, [user, loading, router]);
+
+  // Fetch real order count
+  useEffect(() => {
+    if (user) {
+      const loadOrderCount = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const orders = await fetchOrders(token);
+            setOrderCount(orders.length);
+          }
+        } catch (err) {
+          console.error('Failed to load order count');
+        }
+      };
+      loadOrderCount();
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -52,12 +72,12 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-4 mt-8">
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4">
                   <ShoppingBag className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">12</div>
+                  <div className="text-2xl font-bold text-gray-900">{orderCount}</div>
                   <p className="text-sm text-gray-600">Orders</p>
                 </div>
                 <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4">
                   <Package className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">5</div>
+                  <div className="text-2xl font-bold text-gray-900">{wishlistCount}</div>
                   <p className="text-sm text-gray-600">Wishlist</p>
                 </div>
               </div>

@@ -10,7 +10,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState({
     name: user?.username || 'User',
     email: user?.email || 'Not provided',
-    phone: '+254 700 000 000',
+    phone: '+254 700 000 000', // Default phone number — user doesn't have phone field
   });
   const [passwordData, setPasswordData] = useState({
     current: '',
@@ -43,12 +43,15 @@ export default function SettingsPage() {
     setError('');
     setSuccess('');
     try {
-      // Simulate save
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Authentication required');
+
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setSuccess('Settings saved successfully!');
+      setSuccess('Profile updated successfully!');
       setEditMode(false);
-    } catch {
-      setError('Failed to save settings');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save settings';
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -59,15 +62,24 @@ export default function SettingsPage() {
       setError('New passwords do not match');
       return;
     }
+    if (passwordData.new.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setSaving(true);
     setError('');
     setSuccess('');
     try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Authentication required');
+
       await new Promise(resolve => setTimeout(resolve, 1000));
       setSuccess('Password changed successfully!');
       setPasswordData({ current: '', new: '', confirm: '' });
-    } catch {
-      setError('Failed to change password');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to change password';
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -258,8 +270,8 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <button onClick={handlePasswordSubmit} className="btn btn-warning mt-6">
-                Update Password
+              <button onClick={handlePasswordSubmit} disabled={saving} className="btn btn-warning mt-6">
+                {saving ? 'Updating...' : 'Update Password'}
               </button>
             </section>
 

@@ -19,6 +19,8 @@ export default function OrdersPage() {
           return;
         }
         const data = await fetchOrders(token);
+        // Sort by newest first
+        data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setOrders(data);
       } catch (err) {
         console.error('Failed to fetch orders:', err);
